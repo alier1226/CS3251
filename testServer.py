@@ -19,7 +19,9 @@ def main():
 
 	s = RxpServerSocket(debug)
 	s.bind(fxaPort)
-	s.listen(5)
+
+	while not s.states["Connected"]:
+		s.listen(5, emuIp, emuPort, fxaPort)
 
 
 

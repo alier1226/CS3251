@@ -19,11 +19,8 @@ def main():
 
 
 	s = RxpSocket(debug)
+	s.connect(emuIp, emuPort, fxaPort)
 
-
-
-	s.send("SYN")
-	s.test()
 
 if __name__ == "__main__":
 	main()
