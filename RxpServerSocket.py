@@ -11,19 +11,11 @@ class RxpServerSocket(RxpSocket):
 		super(RxpServerSocket,self).__init__(debug)
 		self.d = debug
 
-	#bind socket to port number
-	def bind(self, portNumber):
-		if self.d: print "Bind server to port", portNumber
-		self.socket.bind( ('', portNumber) )
-		self.portNumber = portNumber
+
 
 
 	#listen for potential connections
-	def listen(self, backlog, emuIp, emuPort, portNumber):
-		self.emuPort = emuPort
-		self.portNumber = portNumber
-		self.hostAddress = emuIp
-
+	def listen(self, backlog):
 
 		if self.d: print "Server listening for SYN:"
 		data, clientAddr = self.socket.recvfrom(self.rcvWindow)

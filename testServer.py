@@ -18,10 +18,10 @@ def main():
 
 
 	s = RxpServerSocket(debug)
-	s.bind(fxaPort)
+	s.bind(emuIp, emuPort, fxaPort)
 
 	while not s.states["Connected"]:
-		s.listen(5, emuIp, emuPort, fxaPort)
+		s.listen(5)
 
 
 

@@ -1,6 +1,7 @@
 __author__ = 'jli'
 import socket
 import md5
+from random import randint
 
 
 class RxpSocket(object):
@@ -9,9 +10,8 @@ class RxpSocket(object):
 		self.d = debug
 
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.value = 9
 		self.timeout = 0
-		self.windowSize = 0
+		self.windowSize = 1
 		self.packetSize = 2000
 		self.rcvWindow = 10000
 		self.seqNumber = 0
@@ -27,7 +27,6 @@ class RxpSocket(object):
 
 
 
-		#self.socket.settimeout(1)
 
 	# close connection
 	def close(self):
@@ -50,18 +49,21 @@ class RxpSocket(object):
 	def setWindowSize(self, value):
 		self.windowSize = value
 
-	def connect(self, addrs, emuPort, portNumber):
+
+	#bind socket to port number
+	def bind(self, emuIp, emuPort, portNumber):
+		if self.d: print "Binding to port", portNumber
+		self.socket.bind( ('', portNumber) )
+		self.emuPort = emuPort
+		self.portNumber = portNumber
+		self.hostAddress = emuIp
+
+	def connect(self):
 
 		if not self.states["Connected"]:
 
-			# update variables
-			self.portNumber = portNumber
-			self.hostAddress = addrs
-			self.emuPort = emuPort
-
-			# bind to port
-			if self.d: print "Binding server to port", portNumber
-			self.socket.bind( ('', self.portNumber) )
+			# generate random sequence number
+			self.seqNumber = randint(0, pow(2,32))
 
 			# creating header for SYN packet
 			header = self._createPacketHeader("SYN")
@@ -90,7 +92,6 @@ class RxpSocket(object):
 
 						goodRes = True
 
-
 				except socket.timeout:
 					continue
 
@@ -105,9 +106,6 @@ class RxpSocket(object):
 
 
 	#Private Functions
-
-
-
 	def _createPacketHeader(self, data):
 		if data == "SYN":
 			flags = "100"
