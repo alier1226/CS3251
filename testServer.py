@@ -20,10 +20,13 @@ def main():
 	s = RxpServerSocket(debug)
 	s.bind(emuIp, emuPort, fxaPort)
 
-	while not s.states["Connected"]:
-		s.listen(5)
+	while True:
+		newSocket = s.listen(5)
+		if not newSocket:
+			print "FxA: Connection not established"
 
-
+	while True:
+		s.recv(s.packetSize)
 
 
 if __name__ == "__main__":
