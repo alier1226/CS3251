@@ -5,6 +5,10 @@ import os
 from random import randint
 
 
+MAXSEQNUM = pow(2,32) - 1
+HEADERSIZE = 131
+PACKETSIZE = HEADERSIZE + 3000
+
 class RxpSocket(object):
 	def __init__(self, debug):
 
@@ -14,13 +18,15 @@ class RxpSocket(object):
 		self.timeout = 0
 		self.windowSize = 1
 		self.rcvWindow = 10000
-		self.packetSize = 3000
 		self.seqNumber = 0
 		self.ackNumber = 0
 
 		self.portNumber = None
 		self.hostAddress = None
 		self.emuPort = None
+
+		# generate random sequence number
+		self.seqNumber = randint(0, pow(2,32) - 1)
 
 		self.states = {
 			"Connected": False
@@ -43,11 +49,29 @@ class RxpSocket(object):
 			print "This file does not exist"
 		if self.d: print "File", fileName, "found"
 
-		# tell other server that its sending a file
+		# tell server that its sending a file
 		goodRes = False
+		self.socket.settimeout(1)
+		header = self._createPacket(000, "GET")
 		while not goodRes:
 			try:
-				if self.d: print  "Telling server its about to send a file"
+				if self.d: print  "Repeat telling server its about to send a file"
+				self.socket.sendto(header, (self.hostAddress, self.emuPort))
+
+				data, addrs = self._recvAndAckNum(PACKETSIZE)
+				rcvHeader = self._decodeHeader(data)
+				if self.d: print  "Received data from server"
+
+
+				# check for corruption
+				if not self._checkChecksum(rcvHeader["checksum"],data):
+					if self.d: print "packet corrupted"
+					continue
+
+				if rcvHeader["flags"] == "010":
+					goodRes = True
+					if self.d: print "flag is ACK"
+
 			except socket.timeout:
 				continue
 
@@ -55,11 +79,11 @@ class RxpSocket(object):
 		packets = []
 
 		readFile = open(fileName, "rb")
-		nextData = readFile.read(self.packetSize)
+		nextData = readFile.read(PACKETSIZE)
 
 		while(nextData):
 			packets.append(nextData)
-			nextData = readFile.read(self.packetSize)
+			nextData = readFile.read(PACKETSIZE)
 
 		readFile.close()
 
@@ -84,11 +108,10 @@ class RxpSocket(object):
 
 		if not self.states["Connected"]:
 
-			# generate random sequence number
-			self.seqNumber = randint(0, pow(2,32) - 1)
+
 
 			# creating header for SYN packet
-			header = self._createPacketHeader("SYN", None)
+			header = self._createPacket("SYN", None)
 
 			# set timeout so that it will keep trying to send SYN
 			self.socket.settimeout(1)
@@ -99,15 +122,16 @@ class RxpSocket(object):
 				try:
 					if self.d: print "Repeat sending SYN to", self.hostAddress, self.emuPort
 					self.socket.sendto(header, (self.hostAddress, self.emuPort))
+					#self._sendAndSeqNum(header, (self.hostAddress, self.emuPort))
 
 
-					data, addrs = self.socket.recvfrom(self.packetSize)
+					data, addrs = self._recvAndAckNum(PACKETSIZE)
 					rcvHeader = self._decodeHeader(data)
 					if self.d: print "Recevied data from server"
 
-					# check for header corruption
+					# check for corruption
 					if not self._checkChecksum(rcvHeader["checksum"],data):
-						if self.d: print "rcvHeader corrupted"
+						if self.d: print "packet corrupted"
 						continue
 
 
@@ -120,7 +144,8 @@ class RxpSocket(object):
 				except socket.timeout:
 					continue
 
-			header = self._createPacketHeader("ACK", None)
+
+			header = self._createPacket("ACK", None)
 			if self.d: print "Sending ACK to", self.hostAddress, self.emuPort, "handshake complete"
 			self.socket.sendto(header, (self.hostAddress, self.emuPort))
 			self.states["Connected"] = True
@@ -132,7 +157,7 @@ class RxpSocket(object):
 
 #########Private Functions###########
 
-	def _createPacketHeader(self, flag, data):
+	def _createPacket(self, flag, data):
 
 		# check for flags
 		if flag == "SYN":
@@ -149,6 +174,15 @@ class RxpSocket(object):
 		# if theres no data, make it an empty string
 		if not data:
 			data = ""
+
+		# calculate sequence number
+		if len(data) > HEADERSIZE:
+			self.seqNumber = self.seqNumber + len(data) - HEADERSIZE
+		else:
+			self.seqNumber += 1
+		# wrap sequence number if it goes past max value
+		if self.seqNumber > MAXSEQNUM:
+			self.seqNumber = self.seqNumber - MAXSEQNUM
 
 
 		if self.d: print "\t HEADER INFO FOR:", flag, data
@@ -172,8 +206,8 @@ class RxpSocket(object):
 		header = header + flags
 		if self.d: print "\t flags:", flags
 
-		header = header + self._calculateChecksum(header + data)
-		if self.d: print "\t checkSum:", int(self._calculateChecksum(header + data),2)
+		header = header + self._calculateChecksum(header)
+		if self.d: print "\t checkSum:", int(self._calculateChecksum(header),2)
 
 		return header
 
@@ -212,7 +246,7 @@ class RxpSocket(object):
 
 	def _checkChecksum(self, oldChecksum, newData):
 
-		# check if header is corrupted
+		# check if packet is corrupted
 		newChecksum = self._calculateChecksum(newData[0:len(newData) - 16])
 		newChecksum = int(newChecksum,2)
 		if oldChecksum == newChecksum:
@@ -243,3 +277,30 @@ class RxpSocket(object):
 
 		return header
 
+	# # send data and calculate next seq number
+	# def _newSeqNum(self, data):
+	# 	if len(data) > HEADERSIZE:
+	# 		self.seqNumber = self.seqNumber + len(data) - HEADERSIZE
+	# 	else:
+	# 		self.seqNumber += 1
+	# 	# wrap sequence number if it goes past max value
+	# 	if self.seqNumber > MAXSEQNUM:
+	# 		self.seqNumber = self.seqNumber - MAXSEQNUM
+	#
+	# 	return
+
+	# receive data and calculate next ack number
+	def _recvAndAckNum(self, size):
+
+		data, addrs = self.socket.recvfrom(size)
+		seqNum = int(data[32:64],2)
+
+		if len(data) > HEADERSIZE:
+			self.ackNumber = seqNum + len(data) - HEADERSIZE
+		else:
+			self.ackNumber = seqNum + 1
+
+		if self.ackNumber > MAXSEQNUM:
+			self.ackNumber = self.ackNumber - MAXSEQNUM
+
+		return data, addrs
