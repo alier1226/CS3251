@@ -250,7 +250,13 @@ class RxpSocket(object):
 		checksum = 0
 		for value in split:
 			checksum = self._add16Bit(checksum, value)
-		return bin(checksum)[2:].zfill(16)
+		b = bin(checksum)[2:].zfill(16)
+		b = b.replace('0','x')
+		b = b.replace('1','0')
+		b = b.replace('x','1')
+		#perform 1st complement
+		return b
+	
 
 	def _checkChecksum(self, oldChecksum, newData):
 
