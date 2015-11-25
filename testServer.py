@@ -27,8 +27,10 @@ def main():
 			print "FxA: Connection not established"
 
 	# listen for next commands
-	while True:
-		newSocket.listen()
+	good = False
+	while not good:
+
+		good = newSocket.listen()
 
 
 if __name__ == "__main__":

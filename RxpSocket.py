@@ -18,15 +18,15 @@ class RxpSocket(object):
 		self.timeout = 0
 		self.windowSize = 1
 		self.rcvWindow = 10000
-		self.seqNumber = 0
 		self.ackNumber = 0
+		self.seqNumber = randint(0, pow(2,32) - 1)
+		self.nextSeqNumber = self.seqNumber
 
 		self.portNumber = None
 		self.hostAddress = None
 		self.emuPort = None
 
 		# generate random sequence number
-		self.seqNumber = randint(0, pow(2,32) - 1)
 
 		self.states = {
 			"Connected": False
@@ -55,11 +55,11 @@ class RxpSocket(object):
 		header = self._createPacket(000, "GET")
 		while not goodRes:
 			try:
-				if self.d: print  "Repeat telling server its about to send a file"
+				if self.d: print  "Repeat telling server its going to send a file"
 				self.socket.sendto(header, (self.hostAddress, self.emuPort))
 
 				data, addrs = self._recvAndAckNum(PACKETSIZE)
-				rcvHeader = self._decodeHeader(data)
+				rcvHeader, rcvData = self._decodeHeader(data)
 				if self.d: print  "Received data from server"
 
 
@@ -68,9 +68,11 @@ class RxpSocket(object):
 					if self.d: print "packet corrupted"
 					continue
 
-				if rcvHeader["flags"] == "010":
+				print rcvHeader
+				if rcvHeader["flags"] == 0b010:
 					goodRes = True
 					if self.d: print "flag is ACK"
+
 
 			except socket.timeout:
 				continue
@@ -126,7 +128,7 @@ class RxpSocket(object):
 
 
 					data, addrs = self._recvAndAckNum(PACKETSIZE)
-					rcvHeader = self._decodeHeader(data)
+					rcvHeader, rcvData = self._decodeHeader(data)
 					if self.d: print "Recevied data from server"
 
 					# check for corruption
@@ -175,14 +177,7 @@ class RxpSocket(object):
 		if not data:
 			data = ""
 
-		# calculate sequence number
-		if len(data) > HEADERSIZE:
-			self.seqNumber = self.seqNumber + len(data) - HEADERSIZE
-		else:
-			self.seqNumber += 1
-		# wrap sequence number if it goes past max value
-		if self.seqNumber > MAXSEQNUM:
-			self.seqNumber = self.seqNumber - MAXSEQNUM
+
 
 
 		if self.d: print "\t HEADER INFO FOR:", flag, data
@@ -209,7 +204,20 @@ class RxpSocket(object):
 		header = header + self._calculateChecksum(header)
 		if self.d: print "\t checkSum:", int(self._calculateChecksum(header),2)
 
-		return header
+		# calculate sequence number
+		if len(data) > 0:
+			self.seqNumber = self.seqNumber + len(data)
+		elif flag == "ACK":
+			self.seqNumber = self.seqNumber
+		else:
+			self.seqNumber += 1
+		# wrap sequence number if it goes past max value
+		if self.seqNumber > MAXSEQNUM:
+			self.seqNumber = self.seqNumber - MAXSEQNUM
+
+
+
+		return header + data
 
 	def _create16bit(self, value):
 		if value > pow(2, 16):
@@ -264,6 +272,7 @@ class RxpSocket(object):
 		rcvWindow = int(data[96:112],2)
 		flags = int(data[112:115],2)
 		checksum = int(data[115:131],2)
+		data = data[131:]
 
 		header = {
 			"sourcePort": sourcePort,
@@ -275,7 +284,7 @@ class RxpSocket(object):
 			"checksum":checksum
 		}
 
-		return header
+		return header, data
 
 	# # send data and calculate next seq number
 	# def _newSeqNum(self, data):

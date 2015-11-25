@@ -3,6 +3,7 @@ __author__ = 'jli'
 from RxpSocket import RxpSocket
 from RxpServerSocket import RxpServerSocket
 import sys
+import time
 
 def main():
 
@@ -22,7 +23,8 @@ def main():
 	s.bind(emuIp, emuPort, fxaPort)
 	s.connect()
 
-	#s.send("AliceChpt1.txt")
+	time.sleep(2)
+	s.send("AliceChpt1.txt")
 
 if __name__ == "__main__":
 	main()

@@ -2,6 +2,7 @@ __author__ = 'jli'
 import socket
 from RxpSocket import RxpSocket
 from random import randint
+import time
 
 MAXSEQNUM = pow(2,32) - 1
 HEADERSIZE = 131
@@ -26,7 +27,7 @@ class RxpServerSocket(RxpSocket):
 
 		if self.d: print "Server listening for SYN"
 		data, clientAddr = self._recvAndAckNum(PACKETSIZE)
-		rcvheader = self._decodeHeader(data)
+		rcvheader, rcvData = self._decodeHeader(data)
 
 
 
@@ -51,11 +52,12 @@ class RxpServerSocket(RxpSocket):
 					if self.d: print "Repeat sending SYNACK to", clientAddr
 					self.socket.sendto(header, (self.hostAddress, self.emuPort))
 					data, clientAddr = self._recvAndAckNum(PACKETSIZE)
-					rcvHeader = self._decodeHeader(data)
+					rcvHeader, rcvData = self._decodeHeader(data)
 
 					if rcvHeader["flags"] == 0b010:
 						goodRes = True
 
+					#if ack is corrupt or lost, just assume client sent ACK
 				except socket.timeout:
 					continue
 
@@ -72,7 +74,27 @@ class RxpServerSocket(RxpSocket):
 
 	#accept a client
 	def listen(self):
-		return
+		self.socket.settimeout(None)
+		if self.d: print "Waiting on client command"
+		data, clientAddrs = self._recvAndAckNum(PACKETSIZE)
+		rcvheader, rcvData = self._decodeHeader(data)
+
+
+
+		#check for corruption
+		if not self._checkChecksum(rcvheader["checksum"],data[:-len(rcvData)]):
+			if self.d: print "packet corrupted"
+			return False
+
+		if self.d: print "Data received:", rcvData
+		header = self._createPacket("ACK", None)
+		if self.d: print "Acknowledging client command"
+		self.socket.sendto(header, (self.hostAddress, self.emuPort))
+
+
+		if rcvData == "GET":
+			print "Client is uploading a file"
+			return True
 
 
 
