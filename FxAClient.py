@@ -7,12 +7,14 @@ import sys
 
 def main():
 	FXAPORT = 5000
-	EMUIP = 8081
+	EMUIP = 8080
 	EMUPORT = 'localhost'
 	STATE = 'welcome'
-	s = RxpServerSocket(False)
+	DEBUG = False
+	s = RxpSocket(DEBUG)
 
 	while(1):
+		#set up for connect
 		if(STATE == 'welcome'):
 			if(len(sys.argv)<4):
 				print "invalid command"
@@ -20,13 +22,13 @@ def main():
 			try:
 				FXAPORT = int(sys.argv[1])
 			except:
-				print "a"
+				print "invalid command"
 
 			if FXAPORT%2 != 0:
 				print "Please enter a valid port number that the socket should bind to (must be even)"
+				print "set to default 8080"
 			EMUIP = sys.argv[2]
 			EMUPORT = int(sys.argv[3])
-			DEBUG = False
 			if len(sys.argv) > 4:
 				if ((sys.argv[4] == 'd') or (sys.argv[4] == 'D')):
 					DEBUG = True
@@ -37,11 +39,14 @@ def main():
 				s = RxpSocket(DEBUG)
 				s.bind(EMUIP, EMUPORT, FXAPORT)
 				if not s.connect():
+					#this is currently wrong. It should print this when connect fails
 					print "can't connect to the server"
 					break
 				STATE = 'connect'
 			else:
 				print('type connect to establish connection')
+
+		#establish connect
 		if(STATE == 'connect'):
 			command = raw_input("It is connected to the server. Please enter a command")
 			if command == 'disconnect':
