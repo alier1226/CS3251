@@ -34,13 +34,14 @@ class fxaserver:
                         print "Invalid debug command"
                 s = RxpServerSocket(DEBUG)
                 s.bind(EMUIP, EMUPORT, FXAPORT)
-                while True:
-                    newSocket = s.listen(5)
-                    if not newSocket:
-                        print "FxA: Connection not established"
+                while not s.states["Connected"]:
+                    s.accept()
+                    if not s.states["Connected"]:
+                        print "FxA: Connection not established, trying again"
 
                 while True:
-                    s.recv(s.packetSize)
-
+                    s.listen()
+                    print "next"
+                    return
 server = fxaserver()
 server.main()

@@ -48,7 +48,7 @@ def main():
 
 		#establish connect
 		if(STATE == 'connect'):
-			command = raw_input("It is connected to the server. Please enter a command")
+			command = raw_input("It is connected to the server. Please enter a command: ")
 			if command == 'disconnect':
 				s.close()
 				STATE = 'disconnect'

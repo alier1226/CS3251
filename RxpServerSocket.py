@@ -20,7 +20,7 @@ class RxpServerSocket(RxpSocket):
 
 
 	#listen for potential connections
-	def accept(self, backlog):
+	def accept(self):
 
 		# generate random sequence number
 		self.socket.settimeout(None)
@@ -34,7 +34,7 @@ class RxpServerSocket(RxpSocket):
 		# check for corruption
 		if not self._checkChecksum(rcvheader["checksum"],data):
 			if self.d: print "packet corrupted"
-			return None, None
+			return False
 
 		# check for SYN flag
 		if rcvheader["flags"] == 0b100:
@@ -70,7 +70,7 @@ class RxpServerSocket(RxpSocket):
 
 			self.states["Connected"] = True
 
-			return self, clientAddr
+			return True
 
 	#accept a client
 	def listen(self):

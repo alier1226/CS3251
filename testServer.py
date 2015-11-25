@@ -22,7 +22,7 @@ def main():
 
 	newSocket = None
 	while not newSocket:
-		newSocket, addrs = s.accept(5)
+		newSocket, addrs = s.accept()
 		if not newSocket:
 			print "FxA: Connection not established"
 

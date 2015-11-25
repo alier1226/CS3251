@@ -22,9 +22,9 @@ class RxpSocket(object):
 		self.seqNumber = randint(0, pow(2,32) - 1)
 		self.nextSeqNumber = self.seqNumber
 
-		self.portNumber = None
-		self.hostAddress = None
-		self.emuPort = None
+		self.portNumber = 0
+		self.hostAddress = 0
+		self.emuPort = 0
 
 		# generate random sequence number
 
@@ -151,6 +151,7 @@ class RxpSocket(object):
 			if self.d: print "Sending ACK to", self.hostAddress, self.emuPort, "handshake complete"
 			self.socket.sendto(header, (self.hostAddress, self.emuPort))
 			self.states["Connected"] = True
+			return True
 		else:
 			print "Already connected"
 			return False
