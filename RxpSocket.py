@@ -45,7 +45,8 @@ class RxpSocket(object):
 		return
 
 	# send data
-	def send(self, packetData):
+	# TODO: change send(). call createpackets.
+	def send(self, data):
 		packets = []
 		# attach header to each packet
 		for p in packetData:
@@ -365,3 +366,13 @@ class RxpSocket(object):
 			self.ackNumber = self.ackNumber - MAXSEQNUM
 
 		return data, addrs
+
+	#TODO: create packets.
+	def createPackets(data):
+		# read all the data from a file and break into groups
+		while(nextData):
+			packetData.append(nextData)
+			nextData = readFile.read(DATASIZE)
+		readFile.close()
+
+		return packetData
