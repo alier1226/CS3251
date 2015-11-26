@@ -60,7 +60,6 @@ class RxpSocket(object):
 		goodRes = False
 		self.socket.settimeout(1)
 
-
 		header = self._createPacket(000, "POST" + ":" + str(len(packets)))
 		while not goodRes:
 			try:
@@ -71,7 +70,6 @@ class RxpSocket(object):
 				rcvHeader, rcvData = self._decodeHeader(data)
 				if self.d: print  "Received data from server"
 
-
 				# check for corruption
 				if not self._checkChecksum(rcvHeader["checksum"],data):
 					if self.d: print "packet corrupted"
@@ -81,51 +79,41 @@ class RxpSocket(object):
 					goodRes = True
 					if self.d: print "data is ACK"
 
-
 			except socket.timeout:
 				continue
 
 
+
+
+
 		self.socket.settimeout(2)
-
-		serverAcked = True
 		while len(packetsInGroups) > 0:
-
-			#####
-			#serverAcked = True
-			if serverAcked:
-				sendGroup = packetsInGroups.pop(0)
-
-			# if the server ACK is wrong, resend the packet
-			serverAcked = True
-
-			# send packets and get ACK from server
+			sendGroup = packetsInGroups.pop(0)
+			# send packets
 			try:
 				for nextPacket in sendGroup:
 					if self.d: print "Sending packet"
 					self.socket.sendto(nextPacket, (self.hostAddress, self.emuPort))
 					time.sleep(.1)
-
-				if self.d: print "Waiting for server ACK"
-				data, addrs = self._recvAndAckNum(PACKETSIZE)
-				rcvHeader, rcvData = self._decodeHeader(data)
-
-				# check for corruption
-				if not self._checkChecksum(rcvHeader["checksum"],data):
-					if self.d: print "packet corrupted"
-					serverAcked = False
-					continue
-
-				# check for ACK flag
-				if not rcvHeader["flags"] == 0b010:
-					if self.d: print "Flag is NOT an ACK"
-					serverAcked = False
-				else:
-					if self.d: print "Flag is an ACK"
-
 			except socket.timeout:
-				serverAcked = False
 				continue
+
+				# if self.d: print "Waiting for server ACK"
+				# 	data, addrs = self._recvAndAckNum(PACKETSIZE)
+				# 	rcvHeader, rcvData = self._decodeHeader(data)
+				#
+				# # check for corruption
+				# if not self._checkChecksum(rcvHeader["checksum"],data):
+				# 	if self.d: print "packet corrupted"
+				# 	serverAcked = False
+				# 	continue
+				#
+				# # check for ACK flag
+				# if not rcvHeader["flags"] == 0b010:
+				# 	if self.d: print "Flag is NOT an ACK"
+				# 	serverAcked = False
+				# else:
+				# 	if self.d: print "Flag is an ACK"
 
 	# set the timeout value
 	def setTimeout(self, value):
@@ -302,7 +290,6 @@ class RxpSocket(object):
 		b = b.replace('x','1')
 		#perform 1st complement
 		return b
-	
 
 	def _checkChecksum(self, oldChecksum, newData):
 

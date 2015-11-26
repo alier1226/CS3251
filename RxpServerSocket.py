@@ -120,22 +120,22 @@ class RxpServerSocket(RxpSocket):
 
 		currentPacket = 0
 		while currentPacket < self.expectedPackets:
-
 			try:
-				data, addrs = self.socket.recvfrom(PACKETSIZE)
+				data, addrs = self._recvAndAckNum(PACKETSIZE)
 				rcvHeader, rcvData = self._decodeHeader(data)
-				dataArr.append(rcvData)
+
+				#check for corruption
+				if not self._checkChecksum(rcvHeader["checksum"],data[:-len(rcvData)]):
+					if self.d: print "packet corrupted"
+					pass
+
+				header = self._createPacket("ACK", None)
+				if self.d: print "Acknowledging client window"
+				self.socket.sendto(header, (self.hostAddress, self.emuPort))
 
 			except socket.timeout:
 				if self.d: print "Did not receive data from client"
 				pass
-
-
-
-			if (currentPacket % self.rcvWindow == self.rcvWindow - 1) or currentPacket + 1 == self.expectedPackets:
-				header = self._createPacket("ACK", None)
-				if self.d: print "Acknowledging client window"
-				self.socket.sendto(header, (self.hostAddress, self.emuPort))
 
 			currentPacket += 1
 			print currentPacket

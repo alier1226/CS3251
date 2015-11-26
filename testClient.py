@@ -24,7 +24,7 @@ def main():
 	s.connect()
 
 	time.sleep(2)
-	s.send("AliceChpt1.txt")
+	s.send("Alice.txt")
 
 if __name__ == "__main__":
 	main()
