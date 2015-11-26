@@ -5,6 +5,7 @@ from RxpServerSocket import RxpServerSocket
 import sys
 import time
 
+
 def main():
 
 	print "hello client starting"
@@ -23,8 +24,12 @@ def main():
 	s.bind(emuIp, emuPort, fxaPort)
 	s.connect()
 
+	print "reading file"
+	readFile = open("Alice.txt", "rb")
+	nextData = readFile.read() + "::ENDFILE::"
+
 	time.sleep(2)
-	s.send("Alice.txt")
+	s.send(nextData)
 
 if __name__ == "__main__":
 	main()

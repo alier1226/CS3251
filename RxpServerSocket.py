@@ -6,7 +6,7 @@ import time
 
 MAXSEQNUM = pow(2,32) - 1
 HEADERSIZE = 131
-DATASIZE = 5000
+DATASIZE = 3000
 PACKETSIZE = HEADERSIZE + DATASIZE
 
 class RxpServerSocket(RxpSocket):
@@ -16,8 +16,9 @@ class RxpServerSocket(RxpSocket):
 		#call constructor of parent class
 		super(RxpServerSocket,self).__init__(debug)
 		self.d = debug
-		self.seqNumber = randint(0, pow(2,32) - 1)
-		self.expectedPackets = 0
+		#self.seqNumber = randint(0, pow(2,32) - 1)
+		self.seqNumber = 20
+		self.expectedSeq = 0
 
 
 
@@ -26,13 +27,11 @@ class RxpServerSocket(RxpSocket):
 
 		# generate random sequence number
 		self.socket.settimeout(None)
-
 		if self.d: print "Server listening for SYN"
 		data, clientAddr = self._recvAndAckNum(PACKETSIZE)
 		rcvheader, rcvData = self._decodeHeader(data)
 
-		self.rcvWindow = rcvheader["rcvWindow"]
-		if self.d: print "Window set to:", self.rcvWindow
+
 
 		# check for corruption
 		if not self._checkChecksum(rcvheader["checksum"],data):
@@ -41,6 +40,11 @@ class RxpServerSocket(RxpSocket):
 
 		# check for SYN flag
 		if rcvheader["flags"] == 0b100:
+
+
+
+
+
 
 			self.socket.settimeout(1)
 			header = self._createPacket("SYNACK", None)
@@ -97,6 +101,8 @@ class RxpServerSocket(RxpSocket):
 
 		_, self.expectedPackets = rcvData.split(":")
 		self.expectedPackets = int(self.expectedPackets)
+		if self.d: print "Expected packets:", self.expectedPackets
+
 
 		if rcvData[:4] == "POST":
 			print "Client is uploading a file"
@@ -109,44 +115,9 @@ class RxpServerSocket(RxpSocket):
 			return False
 
 
-	def recv(self):
-		writeName = "AliceRes.txt"
-		if self.d: print "Server is ready to receive file to:", writeName
-
-		writeFile = open(writeName, "w+")
-
-		self.socket.settimeout(1)
-		dataArr = []
-
-		currentPacket = 0
-		while currentPacket < self.expectedPackets:
-			try:
-				data, addrs = self._recvAndAckNum(PACKETSIZE)
-				rcvHeader, rcvData = self._decodeHeader(data)
-
-				#check for corruption
-				if not self._checkChecksum(rcvHeader["checksum"],data[:-len(rcvData)]):
-					if self.d: print "packet corrupted"
-					pass
-
-				header = self._createPacket("ACK", None)
-				if self.d: print "Acknowledging client window"
-				self.socket.sendto(header, (self.hostAddress, self.emuPort))
-
-			except socket.timeout:
-				if self.d: print "Did not receive data from client"
-				pass
-
-			currentPacket += 1
-			print currentPacket
-
-		for item in dataArr:
-			writeFile.write(item)
 
 
-
-		writeFile.close()
-
+	def send(self, data):
 		return
 	#Private Functions
 

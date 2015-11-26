@@ -3,7 +3,7 @@ __author__ = 'jli'
 from RxpSocket import RxpSocket
 from RxpServerSocket import RxpServerSocket
 import sys
-
+import time
 def main():
 
 	print "hello server starting"
@@ -21,17 +21,21 @@ def main():
 	s.bind(emuIp, emuPort, fxaPort)
 
 	newSocket = None
-	while not newSocket:
-		newSocket, addrs = s.accept()
-		if not newSocket:
-			print "FxA: Connection not established"
+	while not s.accept():
+		pass
+
+
+	s.recv(3000)
 
 	# listen for next commands
-	good = False
-	while not good:
-
-		good = newSocket.listen()
-
+	# good = False
+	# while True:
+	# 	res = s.listen()
+	#
+	# 	if res == "post":
+	# 		s.recv()
+	#
+	# 	time.sleep(100)
 
 if __name__ == "__main__":
 	main()

@@ -7,7 +7,7 @@ import sys
 class fxaserver:
     def main(self):
         FXAPORT = 5000
-        EMUIP = 8080
+        EMUIP = 8081
         EMUPORT = 'localhost'
         STATE = 'welcome'
         DEBUG = False
@@ -24,7 +24,7 @@ class fxaserver:
 
                 if FXAPORT%2 != 1:
                     print "Please enter a valid port number that the socket should bind to (must be even)"
-                    print "set to default 8080"
+                    print "set to default 8081"
                 EMUIP = sys.argv[2]
                 EMUPORT = int(sys.argv[3])
                 if len(sys.argv) > 4:

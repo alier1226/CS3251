@@ -19,6 +19,7 @@ def main():
 	STATE = 'welcome'
 	DEBUG = False
 	s = RxpSocket(DEBUG)
+	msg = ''
 
 	while(1):
 		#set up for connect
@@ -60,50 +61,35 @@ def main():
 				s.close()
 				STATE = 'disconnect'
 			else:
-				temp = command.split(' ')
-				if(len(temp) == 2):
-					if temp[0] == 'get':
+				msg = command.split(' ')
+				if(len(msg) == 2):
+					if msg[0] == 'get':
 						STATE = 'get'
-					elif temp[0] == 'post':
+					elif msg[0] == 'post':
 						STATE = 'post'
-					elif temp[0] == 'window':
+					elif msg[0] == 'window':
+						s.setWindowSize(int (msg[1]))
 						STATE = 'window'
 					else:
 						print'Invalid command. (get F, post F, window W or disconnect)'
 				else:
 					print'Invalid command. (get F, post F, window W or disconnect)'
 		if(STATE == 'post'):
-			print("post file")
-			groupedPackets = createPackets(temp[1])
-			s.send(groupedPackets)
+			print("post file: " + str(msg[1]))
+			if(not os.path.isfile(str(msg[1]))):
+				print "This file does not exist"
+				STATE == 'welcome'
+			print "File", str(msg[1]), "found"
+			readFile = open(str(msg[1]), "rb")
 		if(STATE == 'get'):
-			print('get file')
-		if(STATE == 'Window'):
-			print('window size')
+			print('get file' + str(msg[1]))
+		if(STATE == 'window'):
+			print('window size has been set to '+ str(s.windowSize))
+			STATE = 'connect'
 		if(STATE == 'disconnect'):
 			print('disconnect')
-		print "main loop done, repeating"
-		time.sleep(100)
+			s.close()
 
-def createPackets(fileName):
-		# check if file exists
-		if(not os.path.isfile(fileName)):
-			print "This file does not exist"
-			return False
-		print "File", fileName, "found"
-
-		packetData = []
-
-		readFile = open(fileName, "rb")
-		nextData = readFile.read(DATASIZE)
-
-		# read all the data from a file and break into groups
-		while(nextData):
-			packetData.append(nextData)
-			nextData = readFile.read(DATASIZE)
-		readFile.close()
-
-		return packetData
 
 
 main()
