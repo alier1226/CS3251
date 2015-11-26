@@ -52,7 +52,7 @@ class RxpSocket(object):
 		realData = []
 		bufferLeft = bufsize
 
-		rcvData = "foo"
+		rcvData = ""
 		finishedAll = False
 
 		while not finishedAll:
@@ -70,7 +70,7 @@ class RxpSocket(object):
 					else: self.socket.settimeout(1)
 					data, addrs = self._recvAndAckNum(PACKETSIZE)
 					rcvHeader, rcvData = self._decodeHeader(data)
-					if self.d: print "received data"
+					if self.d: print "received data", rcvData
 
 					#check for corruption
 					if not self._checkChecksum(rcvHeader["checksum"],data[:-len(rcvData)]):
@@ -114,8 +114,6 @@ class RxpSocket(object):
 					waitTillFirst = True
 
 					continue
-
-
 
 			realData.extend(windowData)
 
@@ -169,37 +167,14 @@ class RxpSocket(object):
 
 
 
-		return
+		return realData
 
 	# send data
 	# TODO: change send(). call createpackets.
 	def send(self, data):
-		realData = data
-		# fullPacketArr = []
-		#
-		# # split data into DATASIZE lengths
-		# packetData = []
-		# for i in range(0, len(data), DATASIZE):
-		# 	packetData.append(data[i:i+DATASIZE])
-		#
-		#
-		# # attaching header
-		# endIndex = 1
-		# for pData in packetData:
-		# 	if endIndex % self.windowSize == 0 or packetData.index(pData) == len(packetData) - 1:
-		# 		fullPacketArr.append(self._createPacket("", pData + ":END:"))
-		# 	else:
-		# 		fullPacketArr.append(self._createPacket("", pData))
-		# 	endIndex += 1
-		#
-		#
-		# # split packets to be in a window group
-		# groupedPacketArr = [fullPacketArr[i:i + self.windowSize] for i in range(0, len(fullPacketArr), self.windowSize)]
-
+		realData = data + "::ENDFILE::"
 
 		dataIndex = 0
-
-
 
 		# listen to server
 		#threadListen = ThreadingExample(self)

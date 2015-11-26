@@ -26,9 +26,12 @@ def main():
 
 	print "reading file"
 	readFile = open("Alice.txt", "rb")
-	nextData = readFile.read() + "::ENDFILE::"
+	nextData = readFile.read()
 
-	time.sleep(2)
+	time.sleep(1)
+	s.send("SENDING DATA")
+
+	time.sleep(1)
 	s.send(nextData)
 
 if __name__ == "__main__":

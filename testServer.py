@@ -24,8 +24,10 @@ def main():
 	while not s.accept():
 		pass
 
-
-	s.recv(3000)
+	foo = s.recv(3000)
+	if foo == "SENDING DATA":
+		print "Client is sending data"
+		d = s.recv(3000)
 
 	# listen for next commands
 	# good = False
