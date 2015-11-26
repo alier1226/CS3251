@@ -3,6 +3,13 @@ __author__ = 'alier'
 from RxpSocket import RxpSocket
 from RxpServerSocket import RxpServerSocket
 import sys
+import time
+import os
+
+
+HEADERSIZE = 131
+DATASIZE = 5000
+PACKETSIZE = HEADERSIZE + DATASIZE
 
 
 def main():
@@ -67,12 +74,37 @@ def main():
 					print'Invalid command. (get F, post F, window W or disconnect)'
 		if(STATE == 'post'):
 			print("post file")
+			groupedPackets = createPackets(temp[1])
+			s.send(groupedPackets)
 		if(STATE == 'get'):
 			print('get file')
 		if(STATE == 'Window'):
 			print('window size')
 		if(STATE == 'disconnect'):
 			print('disconnect')
+		print "main loop done, repeating"
+		time.sleep(100)
+
+def createPackets(fileName):
+		# check if file exists
+		if(not os.path.isfile(fileName)):
+			print "This file does not exist"
+			return False
+		print "File", fileName, "found"
+
+		packetData = []
+
+		readFile = open(fileName, "rb")
+		nextData = readFile.read(DATASIZE)
+
+		# read all the data from a file and break into groups
+		while(nextData):
+			packetData.append(nextData)
+			nextData = readFile.read(DATASIZE)
+		readFile.close()
+
+		return packetData
+
 
 main()
 

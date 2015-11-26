@@ -40,7 +40,9 @@ class fxaserver:
                         print "FxA: Connection not established, trying again"
 
                 while True:
-                    s.listen()
+                    res = s.listen()
+                    if res == "post":
+                        s.recv()
                     print "next"
                     return
 server = fxaserver()

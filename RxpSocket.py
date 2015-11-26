@@ -3,11 +3,13 @@ import socket
 import md5
 import os
 from random import randint
-
+import time
 
 MAXSEQNUM = pow(2,32) - 1
 HEADERSIZE = 131
-PACKETSIZE = HEADERSIZE + 3000
+DATASIZE = 5000
+PACKETSIZE = HEADERSIZE + DATASIZE
+
 
 class RxpSocket(object):
 	def __init__(self, debug):
@@ -16,8 +18,7 @@ class RxpSocket(object):
 
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 		self.timeout = 0
-		self.windowSize = 1
-		self.rcvWindow = 10000
+		self.rcvWindow = 3
 		self.ackNumber = 0
 		self.seqNumber = randint(0, pow(2,32) - 1)
 		self.nextSeqNumber = self.seqNumber
@@ -25,6 +26,7 @@ class RxpSocket(object):
 		self.portNumber = 0
 		self.hostAddress = 0
 		self.emuPort = 0
+
 
 		# generate random sequence number
 
@@ -38,21 +40,28 @@ class RxpSocket(object):
 		return
 
 	# receive from server
-	def recv(self, bufsize):
+	def recv(self):
+		print "client"
 		return
 
 	# send data
-	def send(self, fileName):
+	def send(self, packetData):
+		packets = []
+		# attach header to each packet
+		for p in packetData:
+			packets.append(self._createPacket("", p))
 
-		# check if file exists
-		if(not os.path.isfile(fileName)):
-			print "This file does not exist"
-		if self.d: print "File", fileName, "found"
+		# groups packets with size of receive window
+		packetsInGroups = [packets[i:i + self.rcvWindow] for i in range(0, len(packets), self.rcvWindow)]
 
-		# tell server that its sending a file
+		if self.d: print "Sending", len(packets), "packets with a window of", self.rcvWindow
+
+		# tell server that its sending a file and how many packets
 		goodRes = False
 		self.socket.settimeout(1)
-		header = self._createPacket(000, "GET")
+
+
+		header = self._createPacket(000, "POST" + ":" + str(len(packets)))
 		while not goodRes:
 			try:
 				if self.d: print  "Repeat telling server its going to send a file"
@@ -68,35 +77,63 @@ class RxpSocket(object):
 					if self.d: print "packet corrupted"
 					continue
 
-				print rcvHeader
 				if rcvHeader["flags"] == 0b010:
 					goodRes = True
-					if self.d: print "flag is ACK"
+					if self.d: print "data is ACK"
 
 
 			except socket.timeout:
 				continue
 
 
-		packets = []
+		self.socket.settimeout(2)
 
-		readFile = open(fileName, "rb")
-		nextData = readFile.read(PACKETSIZE)
+		serverAcked = True
+		while len(packetsInGroups) > 0:
 
-		while(nextData):
-			packets.append(nextData)
-			nextData = readFile.read(PACKETSIZE)
+			#####
+			#serverAcked = True
+			if serverAcked:
+				sendGroup = packetsInGroups.pop(0)
 
-		readFile.close()
+			# if the server ACK is wrong, resend the packet
+			serverAcked = True
 
-		print "hello"
+			# send packets and get ACK from server
+			try:
+				for nextPacket in sendGroup:
+					if self.d: print "Sending packet"
+					self.socket.sendto(nextPacket, (self.hostAddress, self.emuPort))
+					time.sleep(.1)
+
+				if self.d: print "Waiting for server ACK"
+				data, addrs = self._recvAndAckNum(PACKETSIZE)
+				rcvHeader, rcvData = self._decodeHeader(data)
+
+				# check for corruption
+				if not self._checkChecksum(rcvHeader["checksum"],data):
+					if self.d: print "packet corrupted"
+					serverAcked = False
+					continue
+
+				# check for ACK flag
+				if not rcvHeader["flags"] == 0b010:
+					if self.d: print "Flag is NOT an ACK"
+					serverAcked = False
+				else:
+					if self.d: print "Flag is an ACK"
+
+			except socket.timeout:
+				serverAcked = False
+				continue
+
 	# set the timeout value
 	def setTimeout(self, value):
 		self.socket.settimeout = value
 
 	# set the window size
 	def setWindowSize(self, value):
-		self.windowSize = value
+		self.rcvWindow = value
 
 	#bind socket to port number
 	def bind(self, emuIp, emuPort, portNumber):
@@ -140,7 +177,6 @@ class RxpSocket(object):
 					# check for SYNACK flag
 					if rcvHeader["flags"] == 0b110:
 						if self.d: print "Flag is SYNACK"
-
 						goodRes = True
 
 				except socket.timeout:
@@ -181,7 +217,14 @@ class RxpSocket(object):
 
 
 
-		if self.d: print "\t HEADER INFO FOR:", flag, data
+
+		if self.d:
+			if len(data) > 30:
+				print "HEADER INFO FOR:", flag, data[:30]
+			else:
+				print "HEADER INFO FOR:", flag, data
+
+
 
 		# combine all the header information
 		header = "" + self._create16bit(self.portNumber)
@@ -204,6 +247,8 @@ class RxpSocket(object):
 
 		header = header + self._calculateChecksum(header)
 		if self.d: print "\t checkSum:", int(self._calculateChecksum(header),2)
+
+		if self.d: print "\t data size:", len(data)
 
 		# calculate sequence number
 		if len(data) > 0:
