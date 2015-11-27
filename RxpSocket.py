@@ -26,7 +26,7 @@ class RxpSocket(object):
 		self.ackNumber = 0
 
 		self.seqNumber = randint(0, pow(2,32) - 1)
-		#self.seqNumber = 10
+		self.seqNumber = 10
 
 		self.nextSeqNumber = self.seqNumber
 
@@ -160,26 +160,6 @@ class RxpSocket(object):
 				if self.d: print "End of file"
 				finishedAll = True
 
-
-				# ackDone = False
-				# while not ackDone:
-				#
-				#
-				#
-				# 	# check if server is still sending info => no ack received
-				# 	try:
-				# 		self.socket.settimeout(5)
-				# 		data, addrs = self._recvAndAckNum(PACKETSIZE)
-				# 		rcvHeader, rcvData = self._decodeHeader(data)
-				# 		if data == self.prevData:
-				# 			if self.d: print "ACK not received, trying again"
-				# 			header = self._createPacket("ACK", None)
-				# 			self.socket.sendto(header, (self.hostAddress, self.emuPort))
-				#
-				# 	except socket.timeout:
-				# 		if self.d: print "ACK was received"
-				# 		ackDone = True
-
 		# remove endfile pointer
 		realData = "".join(realData)
 		realData = realData[:-11]
@@ -191,7 +171,6 @@ class RxpSocket(object):
 		return realData
 
 	# send data
-	# TODO: change send(). call createpackets.
 	def send(self, data):
 
 		realData = data + "::ENDFILE::"
@@ -494,18 +473,6 @@ class RxpSocket(object):
 
 		return header, data
 
-	# # send data and calculate next seq number
-	# def _newSeqNum(self, data):
-	# 	if len(data) > HEADERSIZE:
-	# 		self.seqNumber = self.seqNumber + len(data) - HEADERSIZE
-	# 	else:
-	# 		self.seqNumber += 1
-	# 	# wrap sequence number if it goes past max value
-	# 	if self.seqNumber > MAXSEQNUM:
-	# 		self.seqNumber = self.seqNumber - MAXSEQNUM
-	#
-	# 	return
-
 	# receive data and calculate next ack number
 	def _recvAndAckNum(self, size):
 
@@ -524,13 +491,13 @@ class RxpSocket(object):
 
 		return data, addrs
 
-	#TODO: create packets.
-	def createPackets(data):
-		# read all the data from a file and break into groups
-		# while(nextData):
-		# 	packetData.append(nextData)
-		# 	nextData = readFile.read(DATASIZE)
-		# readFile.close()
-		#
-		# return packetData
-		return
+	# #TODO: create packets.
+	# def createPackets(data):
+	# 	# read all the data from a file and break into groups
+	# 	# while(nextData):
+	# 	# 	packetData.append(nextData)
+	# 	# 	nextData = readFile.read(DATASIZE)
+	# 	# readFile.close()
+	# 	#
+	# 	# return packetData
+	# 	return

@@ -77,6 +77,7 @@ class RxpServerSocket(RxpSocket):
 	def listen(self):
 
 		self.seqNumber = randint(0, pow(2,32) - 1)
+		self.seqNumber = 20
 		self.expectedSeq = 0
 		self.socket.settimeout(None)
 		self.states["Accepting"] = True

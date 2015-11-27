@@ -32,7 +32,7 @@ def main():
 
 
 	s.send("NEED DATA")
-	s.recv(3000)
+	# s.recv(3000)
 
 if __name__ == "__main__":
 	main()
