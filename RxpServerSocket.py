@@ -38,6 +38,7 @@ class RxpServerSocket(RxpSocket):
 			# check for SYN flag
 			if rcvheader["flags"] == 0b100:
 
+
 				self.socket.settimeout(1)
 				header = self._createPacket("SYNACK", None)
 				if self.d: print "Received SYN, sending SYNACK"

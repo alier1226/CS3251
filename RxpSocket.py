@@ -27,6 +27,7 @@ class RxpSocket(object):
 
 		self.seqNumber = randint(0, pow(2,32) - 1)
 		self.seqNumber = 10
+		self.hostRcvWindow = 0
 
 		self.nextSeqNumber = self.seqNumber
 
@@ -54,9 +55,9 @@ class RxpSocket(object):
 	# receive from server
 	def recv(self, bufsize):
 		if self.d: print "Ready to receive file"
+		self.rcvWindow = bufsize
 
 		realData = []
-		bufferLeft = bufsize
 
 		rcvData = ""
 		finishedAll = False
@@ -69,6 +70,7 @@ class RxpSocket(object):
 			waitTillFirst = True
 			self.seqNumArr = []
 			firstLoop = True
+			self.rcvWindow = bufsize
 
 			while not windowEnd:
 				try:
@@ -120,11 +122,12 @@ class RxpSocket(object):
 									break
 
 
-					bufferLeft -= len(rcvData)
-					self.rcvWindow = bufferLeft
+					self.rcvWindow -= len(rcvData)
 					if self.rcvWindow < 0:
-						self.rcvWindow = 12
-					#if self.d: print "remaining buffer space:",bufferLeft
+						if self.d: print "Can't accept data, rcv buffer full"
+						self.rcvWindow = 0
+						return False
+					if self.d: print "remaining buffer space:",self.rcvWindow
 
 				except socket.timeout:
 					if self.d: print "Did not receive data from client"
@@ -137,6 +140,9 @@ class RxpSocket(object):
 					if self.d: print "self seqNumARr", self.seqNumArr, "ack", self.ackNumber
 
 					self.nextSeqNumber = self.ackNumber
+
+					if self.d: print "setting host rcv to", rcvHeader["rcvWindow"]
+					self.hostRcvWindow = rcvHeader["rcvWindow"]
 
 					header = self._createPacket("ACK", None)
 					self.socket.sendto(header, (self.hostAddress, self.emuPort))
@@ -172,6 +178,7 @@ class RxpSocket(object):
 
 	# send data
 	def send(self, data):
+		self.rcvWindow = 3000
 
 		realData = data + "::ENDFILE::"
 
@@ -182,7 +189,7 @@ class RxpSocket(object):
 		self.socket.settimeout(1)
 		if self.d: print "starting"
 		while dataIndex < len(realData):
-			if self.d: print "Next window group"
+			if self.d: print "Next window group, but host can only receive", self.hostRcvWindow
 
 			# make first window of packets
 			windowData = realData[dataIndex:(self.windowSize * DATASIZE) + dataIndex]
@@ -233,6 +240,8 @@ class RxpSocket(object):
 					else:
 						if self.d: print "Flag is an ACK"
 						packetsAcked = True
+
+					self.hostRcvWindow = rcvHeader["rcvWindow"]
 
 				except socket.timeout:
 					if self.d: print "No ACK recevied"
@@ -285,7 +294,8 @@ class RxpSocket(object):
 					if not self._checkChecksum(rcvHeader["checksum"],data):
 						if self.d: print "packet corrupted"
 						continue
-					self.nextSeqNumber = rcvHeader["seqNum"] + 2
+
+					self.nextSeqNumber = rcvHeader["seqNum"] + 1
 
 
 					# check for SYNACK flag
@@ -350,7 +360,10 @@ class RxpSocket(object):
 		# if theres no data, make it an empty string
 		if not data:
 			data = ""
-
+		if flag == "ACK":
+			pass
+		else:
+			self.seqNumber += 1
 		if self.d:
 			if len(data) > 30:
 				print "HEADER INFO FOR:", flag, data[:30]
@@ -389,7 +402,7 @@ class RxpSocket(object):
 		# else:
 		# 	self.seqNumber += 1
 
-		self.seqNumber += 1
+
 		# wrap sequence number if it goes past max value
 		if self.seqNumber > MAXSEQNUM:
 			self.seqNumber = self.seqNumber - MAXSEQNUM
