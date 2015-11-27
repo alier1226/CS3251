@@ -20,9 +20,12 @@ def main():
 	s = RxpServerSocket(debug)
 	s.bind(emuIp, emuPort, fxaPort)
 
+	s.listen()
+
 	newSocket = None
-	while not s.accept():
-		pass
+	while not newSocket:
+		newSocket = s.accept()
+
 
 	foo = s.recv(3000)
 	if foo == "NEED DATA":

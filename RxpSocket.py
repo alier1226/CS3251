@@ -25,8 +25,8 @@ class RxpSocket(object):
 		self.windowSize = 3
 		self.ackNumber = 0
 
-		#self.seqNumber = randint(0, pow(2,32) - 1)
-		self.seqNumber = 10
+		self.seqNumber = randint(0, pow(2,32) - 1)
+		#self.seqNumber = 10
 
 		self.nextSeqNumber = self.seqNumber
 
@@ -41,7 +41,9 @@ class RxpSocket(object):
 
 
 		self.states = {
-			"Connected": False
+			"Connected": False,
+			"Accepting": False
+
 		}
 
 
@@ -300,11 +302,11 @@ class RxpSocket(object):
 					rcvHeader, rcvData = self._decodeHeader(data)
 					if self.d: print "Recevied data from server"
 
-					self.nextSeqNumber = rcvHeader["seqNum"] + 2
 					# check for corruption
 					if not self._checkChecksum(rcvHeader["checksum"],data):
 						if self.d: print "packet corrupted"
 						continue
+					self.nextSeqNumber = rcvHeader["seqNum"] + 2
 
 
 					# check for SYNACK flag
