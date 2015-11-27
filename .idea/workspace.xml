@@ -2,11 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="354386cd-41b5-402d-90b4-6d6650058681" name="Default" comment="">
+      <change type="DELETED" beforePath="$PROJECT_DIR$/Alice.txt" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/FxAClient.py" afterPath="$PROJECT_DIR$/FxAClient.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/FxAServer.py" afterPath="$PROJECT_DIR$/FxAServer.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testClient.py" afterPath="$PROJECT_DIR$/testClient.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testFxAServer.py" afterPath="$PROJECT_DIR$/testFxAServer.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testServer.py" afterPath="$PROJECT_DIR$/testServer.py" />
     </list>
     <ignored path="CS3251.iws" />
@@ -31,7 +31,7 @@
       <file leaf-file-name="RxpServerSocket.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/RxpServerSocket.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-9.222222">
+            <state vertical-scroll-proportion="0.0">
               <caret line="42" column="52" selection-start-line="42" selection-start-column="48" selection-end-line="42" selection-end-column="52" />
               <folding>
                 <element signature="e#19#32#0" expanded="true" />
@@ -43,8 +43,8 @@
       <file leaf-file-name="RxpSocket.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/RxpSocket.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="84.666664">
-              <caret line="173" column="13" selection-start-line="173" selection-start-column="8" selection-end-line="173" selection-end-column="13" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="482" column="22" selection-start-line="482" selection-start-column="22" selection-end-line="482" selection-end-column="22" />
               <folding>
                 <element signature="e#19#32#0" expanded="true" />
               </folding>
@@ -52,11 +52,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="FxAClient.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="FxAClient.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/FxAClient.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.25207755">
-              <caret line="164" column="37" selection-start-line="164" selection-start-column="37" selection-end-line="164" selection-end-column="37" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="175" column="0" selection-start-line="175" selection-start-column="0" selection-end-line="175" selection-end-column="0" />
               <folding>
                 <element signature="e#22#53#0" expanded="true" />
               </folding>
@@ -64,11 +64,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="FxAServer.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="FxAServer.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/FxAServer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-81.666664">
-              <caret line="147" column="0" selection-start-line="147" selection-start-column="0" selection-end-line="147" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.45260346">
+              <caret line="121" column="36" selection-start-line="121" selection-start-column="36" selection-end-line="121" selection-end-column="36" />
               <folding>
                 <element signature="e#22#53#0" expanded="true" />
               </folding>
@@ -89,8 +89,8 @@
       <file leaf-file-name="testServer.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/testServer.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-20.0">
-              <caret line="39" column="28" selection-start-line="39" selection-start-column="28" selection-end-line="39" selection-end-column="28" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="39" column="13" selection-start-line="39" selection-start-column="13" selection-end-line="39" selection-end-column="13" />
               <folding />
             </state>
           </provider>
@@ -99,7 +99,7 @@
       <file leaf-file-name="testClient.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/testClient.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-18.333334">
+            <state vertical-scroll-proportion="0.0">
               <caret line="36" column="16" selection-start-line="36" selection-start-column="16" selection-end-line="36" selection-end-column="16" />
               <folding />
             </state>
@@ -124,10 +124,10 @@
         <option value="$PROJECT_DIR$/RxpSocket.py" />
         <option value="$PROJECT_DIR$/RxpServerSocket.py" />
         <option value="$PROJECT_DIR$/testFxAServer.py" />
-        <option value="$PROJECT_DIR$/FxAClient.py" />
-        <option value="$PROJECT_DIR$/FxAServer.py" />
         <option value="$PROJECT_DIR$/testServer.py" />
         <option value="$PROJECT_DIR$/testClient.py" />
+        <option value="$PROJECT_DIR$/FxAClient.py" />
+        <option value="$PROJECT_DIR$/FxAServer.py" />
       </list>
     </option>
   </component>
@@ -385,6 +385,70 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/RxpServerSocket.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="42" column="52" selection-start-line="42" selection-start-column="48" selection-end-line="42" selection-end-column="52" />
+          <folding>
+            <element signature="e#19#32#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/RxpSocket.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="173" column="13" selection-start-line="173" selection-start-column="8" selection-end-line="173" selection-end-column="13" />
+          <folding>
+            <element signature="e#19#32#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/FxAClient.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#22#53#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/FxAServer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="147" column="0" selection-start-line="147" selection-start-column="0" selection-end-line="147" selection-end-column="0" />
+          <folding>
+            <element signature="e#22#53#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/testFxAServer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="26" column="14" selection-start-line="26" selection-start-column="14" selection-end-line="26" selection-end-column="14" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/testServer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="39" column="13" selection-start-line="39" selection-start-column="13" selection-end-line="39" selection-end-column="13" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/testClient.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="36" column="16" selection-start-line="36" selection-start-column="16" selection-end-line="36" selection-end-column="16" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/RxpServerSocket.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -662,19 +726,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/RxpSocket.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="84.666664">
-          <caret line="173" column="13" selection-start-line="173" selection-start-column="8" selection-end-line="173" selection-end-column="13" />
-          <folding>
-            <element signature="e#19#32#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/RxpServerSocket.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-9.222222">
+        <state vertical-scroll-proportion="0.0">
           <caret line="42" column="52" selection-start-line="42" selection-start-column="48" selection-end-line="42" selection-end-column="52" />
           <folding>
             <element signature="e#19#32#0" expanded="true" />
@@ -692,7 +746,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/testClient.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-18.333334">
+        <state vertical-scroll-proportion="0.0">
           <caret line="36" column="16" selection-start-line="36" selection-start-column="16" selection-end-line="36" selection-end-column="16" />
           <folding />
         </state>
@@ -700,26 +754,36 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/testServer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-20.0">
-          <caret line="39" column="28" selection-start-line="39" selection-start-column="28" selection-end-line="39" selection-end-column="28" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="39" column="13" selection-start-line="39" selection-start-column="13" selection-end-line="39" selection-end-column="13" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/FxAServer.py">
+    <entry file="file://$PROJECT_DIR$/RxpSocket.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-81.666664">
-          <caret line="147" column="0" selection-start-line="147" selection-start-column="0" selection-end-line="147" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="482" column="22" selection-start-line="482" selection-start-column="22" selection-end-line="482" selection-end-column="22" />
           <folding>
-            <element signature="e#22#53#0" expanded="true" />
+            <element signature="e#19#32#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/FxAClient.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.25207755">
-          <caret line="164" column="37" selection-start-line="164" selection-start-column="37" selection-end-line="164" selection-end-column="37" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="175" column="0" selection-start-line="175" selection-start-column="0" selection-end-line="175" selection-end-column="0" />
+          <folding>
+            <element signature="e#22#53#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/FxAServer.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.45260346">
+          <caret line="121" column="36" selection-start-line="121" selection-start-column="36" selection-end-line="121" selection-end-column="36" />
           <folding>
             <element signature="e#22#53#0" expanded="true" />
           </folding>

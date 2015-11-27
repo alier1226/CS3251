@@ -31,9 +31,18 @@ def main():
 	# s.send(nextData)
 
 
+<<<<<<< HEAD
 	s.send("NEED DATA")
 	s.recv(3000)
 	s.recv(3000)
 	s.send("asdf")
+=======
+	s.send("HELLo")
+	res = s.recv(3000)
+	print res
+	s.send("WORLD")
+	res = s.recv(3000)
+	print res
+>>>>>>> 341748bcb52d0016628900bdfd8d7d4d5c219806
 if __name__ == "__main__":
 	main()

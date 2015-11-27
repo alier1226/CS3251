@@ -27,10 +27,23 @@ def main():
 		newSocket = s.accept()
 
 
+<<<<<<< HEAD
 	foo = s.recv(3000)
 	s.send("data1")
 	s.send("data2")
 	s.recv(3000)
+=======
+	res = s.recv(3000)
+	print res
+	s.send("FOO")
+	res = s.recv(300)
+	print res
+	s.send("BAR")
+
+
+
+	#foo = s.recv(3000)
+>>>>>>> 341748bcb52d0016628900bdfd8d7d4d5c219806
 	# if foo == "NEED DATA":
 	# 	print "Client needs data"
 	# 	print "reading file"

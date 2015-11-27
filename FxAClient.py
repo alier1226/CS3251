@@ -119,7 +119,8 @@ class fxa_client:
 				print("post file: " + str(self.msg[1]) + " request")
 				if(not os.path.isfile(str(self.msg[1]))):
 					print "This file does not exist"
-					self.STATE = 'welcome'
+					self.STATE = 'connect'
+
 				else:
 					self.data = "pr " + str(self.msg[1])+"/.END"
 					#TODO: delete, only for debug
@@ -148,7 +149,9 @@ class fxa_client:
 					if not self.s.send(self.data):
 						print "unable to post the file, please try again later"
 						self.STATE = 'connect'
-					self.STATE = 'post_complete'
+					else:
+						self.STATE = 'post_complete'
+
 
 			#see if post is successful
 			if(self.STATE == 'post_complete'):
@@ -170,6 +173,10 @@ class fxa_client:
 				if len(recvMsg) == 0 or recvMsg == None:
 					print "Can't download the file from the server. please try again later"
 					self.STATE = 'connect'
+
+				elif recvMsg[0:7] == "gfailed":
+					print "unable to download the file. please try again later"
+
 				elif recvMsg[0:10] != "gcompleted":
 					print "unable to download the file. please try again later"
 				else:

@@ -16,9 +16,9 @@ class fxaserver:
                 full_msg = ''
                 while 1:
                     msg = self.s.recv(2048)
-                    print(msg[-5:]+"loop msg")
+                    # print(msg[-5:]+"loop msg")
                     if msg == None:
-                        print("Can't get message from server")
+                        # print("Can't get message from server")
                         self.STATE = 'welcome'
                         return None
                     else:
@@ -50,7 +50,7 @@ class fxaserver:
         self.data =''
         self.MAXTIMEOUT = 3
         self.command = ''
-        self.postrequset = False
+        self.postrequest = False
         self.postfile = ''
         self.getfile = ''
 
@@ -95,10 +95,10 @@ class fxaserver:
                             print "command from client is none"
                         else:
                             msg = foo.split(" ")
-
+                            print("asdfasdf"+foo + "command")
                             #if post request command
-                            if msg[0] == "pr" and self.postrequset == False:
-                                self.postrequset = True
+                            if msg[0] == "pr" and self.postrequest == False:
+                                self.postrequest = True
                                 self.postfile = msg[1]
                                 print "Recieved post request from client"
                                 print "The post file is "+self.postfile
@@ -113,7 +113,7 @@ class fxaserver:
                             # if post actual file command
                             elif msg[0] == "pm" and self.postrequest == True:
                                 print "Received post file from client"
-                                self.postrequset = False
+                                self.postrequest = False
                                 try:
                                     readFile = open(str(self.postfile), "w")
                                     self.data = foo[3:]
@@ -141,10 +141,13 @@ class fxaserver:
                                 except Exception,e:
                                     print "Unable to send the file to client. Please try again later"
                                     print e
+                                    self.data = 'gfailed/.END'
+                                    self.s.send(self.data)
+
 
                             #not post/get command
                             else:
-                                print "Unknown command form the client"
+                                print "Unknown command from the client"
 
 
 
