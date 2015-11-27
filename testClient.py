@@ -30,12 +30,8 @@ def main():
 	# nextData = readFile.read()
 	# s.send(nextData)
 
+	s.send("NEED DATA")
+	s.recv(3000)
 
-	s.send("HELLo")
-	res = s.recv(3000)
-	print res
-	s.send("WORLD")
-	res = s.recv(3000)
-	print res
 if __name__ == "__main__":
 	main()

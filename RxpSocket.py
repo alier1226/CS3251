@@ -66,6 +66,7 @@ class RxpSocket(object):
 
 			windowData = []
 			windowError = False
+			bufferFull = False
 			windowEnd = False
 			waitTillFirst = True
 			self.seqNumArr = []
@@ -125,8 +126,8 @@ class RxpSocket(object):
 					self.rcvWindow -= len(rcvData)
 					if self.rcvWindow < 0:
 						if self.d: print "Can't accept data, rcv buffer full"
-						self.rcvWindow = 0
-						return False
+						bufferFull = True
+
 					if self.d: print "remaining buffer space:",self.rcvWindow
 
 				except socket.timeout:
@@ -144,8 +145,15 @@ class RxpSocket(object):
 					if self.d: print "setting host rcv to", rcvHeader["rcvWindow"]
 					self.hostRcvWindow = rcvHeader["rcvWindow"]
 
-					header = self._createPacket("ACK", None)
-					self.socket.sendto(header, (self.hostAddress, self.emuPort))
+					if bufferFull:
+						temp = self.rcvWindow
+						self.rcvWindow = 0
+						header = self._createPacket("ACK", None)
+						self.socket.sendto(header, (self.hostAddress, self.emuPort))
+						self.rcvWindow = temp
+					else:
+						header = self._createPacket("ACK", None)
+						self.socket.sendto(header, (self.hostAddress, self.emuPort))
 					break
 				elif windowError:
 					if self.d: print "Error in sending window"
@@ -155,6 +163,7 @@ class RxpSocket(object):
 					waitTillFirst = True
 					firstLoop = True
 
+					self.rcvWindow = bufsize
 					self.seqNumArr = []
 
 					continue
@@ -241,13 +250,18 @@ class RxpSocket(object):
 						if self.d: print "Flag is an ACK"
 						packetsAcked = True
 
+
+					if rcvHeader["rcvWindow"] == 0:
+						if self.d: print "Can't send any more data to host"
+						return None
+
 					self.hostRcvWindow = rcvHeader["rcvWindow"]
 
 				except socket.timeout:
 					if self.d: print "No ACK recevied"
 					continue
 
-		return
+		return True
 
 	# set the timeout value
 	def setTimeout(self, value):
