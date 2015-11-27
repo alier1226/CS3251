@@ -30,6 +30,10 @@ class RxpSocket(object):
 
 		self.nextSeqNumber = self.seqNumber
 
+		self.seqNumArr = []
+
+		self.prevData = 0
+
 		self.portNumber = 0
 		self.hostAddress = 0
 		self.emuPort = 0
@@ -61,6 +65,8 @@ class RxpSocket(object):
 			windowError = False
 			windowEnd = False
 			waitTillFirst = True
+			self.seqNumArr = []
+			firstLoop = True
 
 			while not windowEnd:
 				try:
@@ -70,19 +76,30 @@ class RxpSocket(object):
 					else: self.socket.settimeout(1)
 					data, addrs = self._recvAndAckNum(PACKETSIZE)
 					rcvHeader, rcvData = self._decodeHeader(data)
-					if self.d: print "received data", rcvData
+					self.prevData = data
+
+					if self.d: print "received data", rcvHeader["seqNum"], "next seq", self.nextSeqNumber
+					self.seqNumArr.append(rcvHeader["seqNum"])
+
+
 
 					#check for corruption
 					if not self._checkChecksum(rcvHeader["checksum"],data[:-len(rcvData)]):
 						if self.d: print "packet corrupted"
 						windowError =True
 
+					# check if first packet has the correct seq number
+					if firstLoop:
+						if self.nextSeqNumber != rcvHeader["seqNum"]:
+							if self.d: print "next seqNum is not correct", self.nextSeqNumber, rcvHeader["seqNum"]
+							windowError = True
+
+
+
 					# check for end of window
 					if (len(rcvData) > 5 and rcvData[-5:] == ":END:") :
 						if self.d: print "End of window detected"
 						windowEnd = True
-
-
 
 					#if this is the last packet in the window, don't include the end pointer
 					if windowEnd:
@@ -90,11 +107,22 @@ class RxpSocket(object):
 					else:
 						windowData.append(rcvData)
 
+					# check if packets are in the right order
+					if windowEnd:
+						if len(self.seqNumArr) > 1:
+							if self.d: print "seqNumArr", self.seqNumArr
+							for i in range (0, len(self.seqNumArr) - 1):
+								if self.seqNumArr[i] + 1 != self.seqNumArr[i + 1]:
+									if self.d: print "Out of order packets", self.seqNumArr[i] + 1, self.seqNumArr[i + 1]
+									windowError = True
+									break
+
+
 					bufferLeft -= len(rcvData)
 					self.rcvWindow = bufferLeft
 					if self.rcvWindow < 0:
 						self.rcvWindow = 12
-					if self.d: print "remaining buffer space:",bufferLeft
+					#if self.d: print "remaining buffer space:",bufferLeft
 
 				except socket.timeout:
 					if self.d: print "Did not receive data from client"
@@ -104,6 +132,10 @@ class RxpSocket(object):
 				# if finished and error, dont send ack, delete data, set error to false
 				if not windowError and windowEnd:
 					if self.d: print "Received all of window, acknowledging"
+					if self.d: print "self seqNumARr", self.seqNumArr, "ack", self.ackNumber
+
+					self.nextSeqNumber = self.ackNumber
+
 					header = self._createPacket("ACK", None)
 					self.socket.sendto(header, (self.hostAddress, self.emuPort))
 					break
@@ -111,67 +143,55 @@ class RxpSocket(object):
 					if self.d: print "Error in sending window"
 					windowError = False
 					windowData = []
+					windowEnd = False
 					waitTillFirst = True
+					firstLoop = True
+
+					self.seqNumArr = []
 
 					continue
+				firstLoop = False
 
 			realData.extend(windowData)
 
-			if (len(rcvData) > 16 and rcvData[-16:] == "::ENDFILE:::END:"):
+			if (len(rcvData) > 16 and rcvData[-16:] == "::ENDFILE:::END:") and not windowError:
 				if self.d: print "End of file"
 				finishedAll = True
 
-		# remove endfile pointer
 
+				# ackDone = False
+				# while not ackDone:
+				#
+				#
+				#
+				# 	# check if server is still sending info => no ack received
+				# 	try:
+				# 		self.socket.settimeout(5)
+				# 		data, addrs = self._recvAndAckNum(PACKETSIZE)
+				# 		rcvHeader, rcvData = self._decodeHeader(data)
+				# 		if data == self.prevData:
+				# 			if self.d: print "ACK not received, trying again"
+				# 			header = self._createPacket("ACK", None)
+				# 			self.socket.sendto(header, (self.hostAddress, self.emuPort))
+				#
+				# 	except socket.timeout:
+				# 		if self.d: print "ACK was received"
+				# 		ackDone = True
+
+		# remove endfile pointer
 		realData = "".join(realData)
 		realData = realData[:-11]
 
 		foo = open("foo.txt", "w+")
 		foo.write(realData)
 		foo.close()
-		# dataArr = []
-		#
-		#
-		# while True:
-		# 	try:
-		# 		data, addrs = self._recvAndAckNum(PACKETSIZE)
-		# 		rcvHeader, rcvData = self._decodeHeader(data)
-		#
-		# 		#check for corruption
-		# 		if not self._checkChecksum(rcvHeader["checksum"],data[:-len(rcvData)]):
-		# 			if self.d: print "packet corrupted"
-		# 			continue
-		#
-		# 		if rcvData == ":END:":
-		# 			if self.d: print "End of sender window"
-		#
-		# 		dataArr.append(rcvData)
-		#
-		#
-		#
-			# except socket.timeout:
-			# 	if self.d: print "Did not receive data from client"
-			# 	continue
-		#
-		# header = self._createPacket("ACK", None)
-		# if self.d: print "Acknowledging client window"
-		# self.rcvWindow = self.rcvWindow - len(rcvData)
-		# self.socket.sendto(header, (self.hostAddress, self.emuPort))
-		#
-		# 	currentPacket += 1
-		# 	print currentPacket
-		#
-		# for item in dataArr:
-		# 	writeFile.write(item)
-
-
-
 
 		return realData
 
 	# send data
 	# TODO: change send(). call createpackets.
 	def send(self, data):
+
 		realData = data + "::ENDFILE::"
 
 		dataIndex = 0
@@ -280,6 +300,7 @@ class RxpSocket(object):
 					rcvHeader, rcvData = self._decodeHeader(data)
 					if self.d: print "Recevied data from server"
 
+					self.nextSeqNumber = rcvHeader["seqNum"] + 2
 					# check for corruption
 					if not self._checkChecksum(rcvHeader["checksum"],data):
 						if self.d: print "packet corrupted"
@@ -293,12 +314,34 @@ class RxpSocket(object):
 
 				except socket.timeout:
 					continue
-
+				header = self._createPacket("ACK", None)
+				self.socket.sendto(header, (self.hostAddress, self.emuPort))
 			# set server rcvWindow
+			# ackDone = False
+			# while not ackDone:
+			#
+			# 	header = self._createPacket("ACK", None)
+			# 	self.socket.sendto(header, (self.hostAddress, self.emuPort))
+			#
+			# 	if self.d: print "Sending ACK to", self.hostAddress, self.emuPort
+			#
+			# 	# check if server is still sending info => no ack received
+			# 	try:
+			# 		self.socket.settimeout(1)
+			# 		data, addrs = self._recvAndAckNum(PACKETSIZE)
+			# 		rcvHeader, rcvData = self._decodeHeader(data)
+			#
+			# 		if rcvHeader["flags"] == 0b110:
+			# 			if self.d: print "ACK not received, trying again"
+			#
+			# 	except socket.timeout:
+			# 		if self.d: print "ACK was received"
+			# 		ackDone = True
 
-			header = self._createPacket("ACK", None)
-			if self.d: print "Sending ACK to", self.hostAddress, self.emuPort, "handshake complete"
-			self.socket.sendto(header, (self.hostAddress, self.emuPort))
+
+
+
+
 			self.states["Connected"] = True
 			return True
 		else:
@@ -364,6 +407,7 @@ class RxpSocket(object):
 		# 	self.seqNumber = self.seqNumber
 		# else:
 		# 	self.seqNumber += 1
+
 		self.seqNumber += 1
 		# wrap sequence number if it goes past max value
 		if self.seqNumber > MAXSEQNUM:

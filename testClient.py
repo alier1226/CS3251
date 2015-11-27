@@ -24,15 +24,15 @@ def main():
 	s.bind(emuIp, emuPort, fxaPort)
 	s.connect()
 
-	print "reading file"
-	readFile = open("Alice.txt", "rb")
-	nextData = readFile.read()
+	# s.send("SEND DATA")
+	# print "reading file"
+	# readFile = open("Alice.txt", "rb")
+	# nextData = readFile.read()
+	# s.send(nextData)
 
-	time.sleep(1)
-	s.send("SENDING DATA")
 
-	time.sleep(1)
-	s.send(nextData)
+	s.send("NEED DATA")
+	s.recv(3000)
 
 if __name__ == "__main__":
 	main()

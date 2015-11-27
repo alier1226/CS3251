@@ -31,8 +31,6 @@ class RxpServerSocket(RxpSocket):
 		data, clientAddr = self._recvAndAckNum(PACKETSIZE)
 		rcvheader, rcvData = self._decodeHeader(data)
 
-
-
 		# check for corruption
 		if not self._checkChecksum(rcvheader["checksum"],data):
 			if self.d: print "packet corrupted"
@@ -59,16 +57,18 @@ class RxpServerSocket(RxpSocket):
 					if rcvHeader["flags"] == 0b010:
 						goodRes = True
 
-					#if ack is corrupt or lost, just assume client sent ACK
+				#if ack is corrupt or lost, just assume client sent ACK
 				except socket.timeout:
+					if self.d: print "Did not receive ACK"
+					#return False
 					continue
-
-
 
 			if loop <= 0:
 				if self.d: print "Did not receive ACK, handshake complete"
 			else:
 				if self.d: print "Received ACK, handshake complete"
+				self.nextSeqNumber = rcvHeader["seqNum"] + 1
+
 
 			self.states["Connected"] = True
 
@@ -76,43 +76,33 @@ class RxpServerSocket(RxpSocket):
 
 	#accept a client
 	def listen(self):
-		self.socket.settimeout(None)
-		if self.d: print "Waiting on client command"
-		data, clientAddrs = self._recvAndAckNum(PACKETSIZE)
-		rcvheader, rcvData = self._decodeHeader(data)
 
-
-
-		#check for corruption
-		if not self._checkChecksum(rcvheader["checksum"],data[:-len(rcvData)]):
-			if self.d: print "packet corrupted"
-			return False
-
-		# ACK the client command
-		if self.d: print "Data received:", rcvData
-		header = self._createPacket("ACK", None)
-		if self.d: print "Acknowledging client command"
-		self.socket.sendto(header, (self.hostAddress, self.emuPort))
-
-		_, self.expectedPackets = rcvData.split(":")
-		self.expectedPackets = int(self.expectedPackets)
-		if self.d: print "Expected packets:", self.expectedPackets
-
-
-		if rcvData[:4] == "POST":
-			print "Client is uploading a file"
-			return "post"
-		elif rcvData[:3] == "GET":
-			print "Client is downloading a file"
-			return "get"
-		else:
-			print "Client command not recognized"
-			return False
+		self.seqNumber = 20
+		self.expectedSeq = 0
+		# self.socket.settimeout(None)
+		# if self.d: print "Waiting on client command"
+		# data, clientAddrs = self._recvAndAckNum(PACKETSIZE)
+		# rcvheader, rcvData = self._decodeHeader(data)
+		#
+		#
+		#
+		# #check for corruption
+		# if not self._checkChecksum(rcvheader["checksum"],data[:-len(rcvData)]):
+		# 	if self.d: print "packet corrupted"
+		# 	return False
+		#
+		# # ACK the client command
+		# if self.d: print "Data received:", rcvData
+		# header = self._createPacket("ACK", None)
+		# if self.d: print "Acknowledging client command"
+		# self.socket.sendto(header, (self.hostAddress, self.emuPort))
+		#
+		# _, self.expectedPackets = rcvData.split(":")
+		# self.expectedPackets = int(self.expectedPackets)
+		# if self.d: print "Expected packets:", self.expectedPackets
 
 
 
 
-	def send(self, data):
-		return
 	#Private Functions
 
