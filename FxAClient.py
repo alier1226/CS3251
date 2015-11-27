@@ -37,7 +37,7 @@ class fxa_client:
 						return None
 					else:
 						full_msg = full_msg+msg
-						if len(full_msg)>=5 and full_msg[-5:] == "\.END":
+						if len(full_msg)>=5 and full_msg[-5:] == "/.END":
 							break
 				if(len(full_msg)>0):
 					# print("full message here: " + full_msg[0:-5])
@@ -120,13 +120,14 @@ class fxa_client:
 				if(not os.path.isfile(str(self.msg[1]))):
 					print "This file does not exist"
 					self.STATE = 'welcome'
-				self.data = "pr " + str(self.msg[1])+"/.END"
-				#TODO: delete, only for debug
-				self.s.send(self.data)
-				# if(not self.s.send(self.data)):
-				# 	print "Can't send post request"
-				# 	self.STATE = 'connect'
-				self.STATE = 'post_request'
+				else:
+					self.data = "pr " + str(self.msg[1])+"/.END"
+					#TODO: delete, only for debug
+					self.s.send(self.data)
+					# if(not self.s.send(self.data)):
+					# 	print "Can't send post request"
+					# 	self.STATE = 'connect'
+					self.STATE = 'post_request'
 
 			#send file to server
 			if(self.STATE == 'post_request'):
@@ -161,9 +162,10 @@ class fxa_client:
 			if(self.STATE == 'get'):
 				print('get file' + str(self.msg[1]))
 				self.data = 'gr ' + str(self.msg[1])+ '/.END'
-				if not self.s.send(self.data):
-					print "Can't send get file: " + str(self.msg[1]) +" request. please try again later"
-					self.STATE = 'connect'
+				self.s.send(self.data)
+				# if not self.s.send(self.data):
+				# 	print "Can't send get file: " + str(self.msg[1]) +" request. please try again later"
+				# 	self.STATE = 'connect'
 				recvMsg = self._receive(self.s)
 				if len(recvMsg) == 0 or recvMsg == None:
 					print "Can't download the file from the server. please try again later"

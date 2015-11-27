@@ -19,40 +19,30 @@ def main():
 
 	s = RxpServerSocket(debug)
 	s.bind(emuIp, emuPort, fxaPort)
-
+	s.listen()
 	newSocket = None
 	while not s.accept():
 		pass
 
 	#test post
-	# foo = s.recv(2000)
-	# msg = foo.split(" ")
-	# if msg[0] == "pr":
-	# 	print "post request"
-	# 	foo = "p /.END"
-	# 	s.send(foo)
-	# 	foo= s.recv(3000)
-	# 	msg = foo.split(" ")
-	# 	if msg[0] == "pm":
-	# 		s.send("pcompleted\.END")
-
-	#test get
 	foo = s.recv(2000)
 	msg = foo.split(" ")
-	if msg[0] == "gr":
-		print "get request"
-		foo = "gcompleted"+"file"+"\.END"
+	if msg[0] == "pr":
+		print "post request"
+		foo = "p /.END"
 		s.send(foo)
+		foo= s.recv(3000)
+		msg = foo.split(" ")
+		if msg[0] == "pm":
+			s.send("pcompleted/.END")
 
-	# listen for next commands
-	# good = False
-	# while True:
-	# 	res = s.listen()
-	#
-	# 	if res == "post":
-	# 		s.recv()
-	#
-	# 	time.sleep(100)
+	#test get
+	# foo = s.recv(2000)
+	# msg = foo.split(" ")
+	# if msg[0] == "gr":
+	# 	print "get request"
+	# 	foo = "gcompleted"+"file"+"\.END"
+	# 	s.send(foo)
 
 if __name__ == "__main__":
 	main()

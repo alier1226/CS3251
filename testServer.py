@@ -28,6 +28,9 @@ def main():
 
 
 	foo = s.recv(3000)
+	s.send("data1")
+	s.send("data2")
+	s.recv(3000)
 	# if foo == "NEED DATA":
 	# 	print "Client needs data"
 	# 	print "reading file"
