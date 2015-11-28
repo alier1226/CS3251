@@ -124,11 +124,12 @@ class fxa_client:
 				else:
 					self.data = "pr " + str(self.msg[1])+"/.END"
 					#TODO: delete, only for debug
-					self.s.send(self.data)
-					# if(not self.s.send(self.data)):
-					# 	print "Can't send post request"
-					# 	self.STATE = 'connect'
-					self.STATE = 'post_request'
+					# self.s.send(self.data)
+					if self.s.send(self.data) == None:
+						print "Can't send post request"
+						self.STATE = 'connect'
+					else:
+						self.STATE = 'post_request'
 
 			#send file to server
 			if(self.STATE == 'post_request'):
@@ -146,7 +147,7 @@ class fxa_client:
 					self.data = self.data + '/.END'
 					readFile.close()
 					#TODO: send() needs to return boolean
-					if not self.s.send(self.data):
+					if self.s.send(self.data) == None:
 						print "unable to post the file, please try again later"
 						self.STATE = 'connect'
 					else:
@@ -165,30 +166,31 @@ class fxa_client:
 			if(self.STATE == 'get'):
 				print('get file' + str(self.msg[1]))
 				self.data = 'gr ' + str(self.msg[1])+ '/.END'
-				self.s.send(self.data)
-				# if not self.s.send(self.data):
-				# 	print "Can't send get file: " + str(self.msg[1]) +" request. please try again later"
-				# 	self.STATE = 'connect'
-				recvMsg = self._receive(self.s)
-				if len(recvMsg) == 0 or recvMsg == None:
-					print "Can't download the file from the server. please try again later"
+				# self.s.send(self.data)
+				if self.s.send(self.data) == None:
+					print "Can't send get file: " + str(self.msg[1]) +" request. please try again later"
 					self.STATE = 'connect'
-
-				elif recvMsg[0:7] == "gfailed":
-					print "unable to download the file. please try again later"
-
-				elif recvMsg[0:10] != "gcompleted":
-					print "unable to download the file. please try again later"
 				else:
-					try:
-						readFile = open(str(self.msg[1]), "w")
-						self.data = recvMsg[10:]
-						readFile.write(self.data)
-						readFile.close()
-						print("downloaded "+self.msg[1]+" successfully")
-					except Exception, e:
-						print "unable to write the file."+ e
-				self.STATE = 'connect'
+					recvMsg = self._receive(self.s)
+					if len(recvMsg) == 0 or recvMsg == None:
+						print "Can't download the file from the server. please try again later"
+						self.STATE = 'connect'
+
+					elif recvMsg[0:7] == "gfailed":
+						print "unable to download the file. please try again later"
+
+					elif recvMsg[0:10] != "gcompleted":
+						print "unable to download the file. please try again later"
+					else:
+						try:
+							readFile = open(str(self.msg[1]), "w")
+							self.data = recvMsg[10:]
+							readFile.write(self.data)
+							readFile.close()
+							print("downloaded "+self.msg[1]+" successfully")
+						except Exception, e:
+							print "unable to write the file."+ e
+					self.STATE = 'connect'
 
 			#user wants to change window size
 			if(self.STATE == 'window'):

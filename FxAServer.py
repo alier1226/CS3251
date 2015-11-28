@@ -104,11 +104,11 @@ class fxaserver:
                                 print "The post file is "+self.postfile
                                 foo = "p /.END"
                                 # TODO: only for debug. delete it when send returns boolean
-                                self.s.send(foo)
-                                # if self.s.send(foo):
-                                #     print "Send post request confirmation successfully."
-                                # else:
-                                #     print "Can't send post request confirmation back to client. Please try again later"
+                                # self.s.send(foo)
+                                if self.s.send(foo) != None:
+                                    print "Send post request confirmation successfully."
+                                else:
+                                    print "Can't send post request confirmation back to client. Please try again later"
 
                             # if post actual file command
                             elif msg[0] == "pm" and self.postrequest == True:
@@ -120,6 +120,8 @@ class fxaserver:
                                     readFile.write(self.data)
                                     readFile.close()
                                     print("downloaded "+self.postfile+" from client successfully")
+                                    if self.s.send("pcompleted/.END") == None:
+                                        print "Can't send post complete confirmation. Please try again later"
                                 except Exception, e:
                                     print "unable to get the file from client. Please try again later"
                                     print e
@@ -135,15 +137,14 @@ class fxaserver:
                                     self.data += readFile.read()
                                     self.data += '/.END'
                                     # TODO: only for debug.
-                                    self.s.send(self.data)
-                                    # if not self.s.send(self.data):
-                                    #     print "Can't send the file to client"
+                                    # self.s.send(self.data)
+                                    if self.s.send(self.data) == None:
+                                        print "Can't send the file to client"
                                 except Exception,e:
                                     print "Unable to send the file to client. Please try again later"
                                     print e
                                     self.data = 'gfailed/.END'
                                     self.s.send(self.data)
-
 
                             #not post/get command
                             else:
