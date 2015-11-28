@@ -3,6 +3,8 @@ __author__ = 'alier'
 from RxpSocket import RxpSocket
 from RxpServerSocket import RxpServerSocket
 import sys
+import threading
+import time
 
 class fxaserver:
 
@@ -43,7 +45,8 @@ class fxaserver:
         self.FXAPORT = 5000
         self.EMUIP = 8081
         self.EMUPORT = 'localhost'
-        self.STATE = 'welcome'
+        self.terminate = False
+        self.connected = False
         self.DEBUG = False
         self.s = RxpServerSocket(self.DEBUG)
         self.msg = ''
@@ -53,102 +56,146 @@ class fxaserver:
         self.postrequest = False
         self.postfile = ''
         self.getfile = ''
+        self.finished = True
+        self.thread = threading.Thread(target=self.getcommand, args=())
+        self.thread.daemon = True
+        self.thread.start()
+
+    def getcommand(self):
+        timeout =0
+        while(1):
+            self.command = raw_input("Type a command:\n")
+            print("You typed a command: "+ self.command)
+            # terminate command
+            if self.command == 'terminate':
+                self.terminate = True
+                print("User wants to shut down the server")
+
+            else:
+                temp = self.command.split(" ")
+
+                # change window size command
+                if len(temp) == 2 and temp[0] == 'window':
+                    print("User wants to change window size")
+                    try:
+                        windowSize = int(temp[1])
+                        self.s.setWindowSize(windowSize)
+                        print "Changed window size to" + windowSize
+                    except Exception,e:
+                        print("Unable to change window size. Please try again later")
+
+                #Invalid command
+                else:
+                    print("Invalid command. please re-enter.")
+
+            if(self.terminate == True and self.finished == True):
+                if(self.connected == True):
+                    if self.s.send("close") == None:
+                        print("Unable to shut down client. please try again later")
+                print("Shutting down server now")
+                self.s.close()
+
+
 
 
     def main(self):
         while(1):
-            if(self.STATE == 'welcome'):
-                if(len(sys.argv)<4):
-                    print "invalid command"
-                    break
+            if(len(sys.argv)<4):
+                print "invalid command"
+                break
+            try:
+                self.FXAPORT = int(sys.argv[1])
+            except:
+                print "invalid command"
+
+            if self.FXAPORT%2 != 1:
+                print "Please enter a valid port number that the socket should bind to (must be even)"
+                print "set to default 8081"
+            self.EMUIP = sys.argv[2]
+            self.EMUPORT = int(sys.argv[3])
+            if len(sys.argv) > 4:
+                if ((sys.argv[4] == 'd') or (sys.argv[4] == 'D')):
+                    self.DEBUG = True
+                else:
+                    print "Invalid debug command"
+            self.s = RxpServerSocket(self.DEBUG)
+            self.s.bind(self.EMUIP, self.EMUPORT, self.FXAPORT)
+            self.s.listen()
+
+            while not self.s.states["Connected"]:
                 try:
-                    self.FXAPORT = int(sys.argv[1])
-                except:
-                    print "invalid command"
+                    self.s.accept()
+                    print("A client has connected")
+                    self.connected = True
+                except Exception,e:
+                    print("waiting for client")
 
-                if self.FXAPORT%2 != 1:
-                    print "Please enter a valid port number that the socket should bind to (must be even)"
-                    print "set to default 8081"
-                self.EMUIP = sys.argv[2]
-                self.EMUPORT = int(sys.argv[3])
-                if len(sys.argv) > 4:
-                    if ((sys.argv[4] == 'd') or (sys.argv[4] == 'D')):
-                        self.DEBUG = True
+                #client
+                while(1):
+                    foo = self._receive(self.s)
+                    print "received command from client: "+foo
+                    if foo == None or len(foo) == 0:
+                        print "command from client is none"
                     else:
-                        print "Invalid debug command"
-                self.s = RxpServerSocket(self.DEBUG)
-                self.s.bind(self.EMUIP, self.EMUPORT, self.FXAPORT)
-                self.s.listen()
-
-                while not self.s.states["Connected"]:
-                    try:
-                        self.s.accept()
-                        print("A client has connected")
-                    except Exception,e:
-                        print("waiting for client")
-
-                    #client
-                    while(1):
-                        foo = self._receive(self.s)
-                        print "received command from client: "+foo
-                        if foo == None or len(foo) == 0:
-                            print "command from client is none"
-                        else:
-                            msg = foo.split(" ")
-                            print("asdfasdf"+foo + "command")
-                            #if post request command
-                            if msg[0] == "pr" and self.postrequest == False:
-                                self.postrequest = True
-                                self.postfile = msg[1]
-                                print "Recieved post request from client"
-                                print "The post file is "+self.postfile
-                                foo = "p /.END"
-                                # TODO: only for debug. delete it when send returns boolean
-                                # self.s.send(foo)
-                                if self.s.send(foo) != None:
-                                    print "Send post request confirmation successfully."
-                                else:
-                                    print "Can't send post request confirmation back to client. Please try again later"
-
-                            # if post actual file command
-                            elif msg[0] == "pm" and self.postrequest == True:
-                                print "Received post file from client"
-                                self.postrequest = False
-                                try:
-                                    readFile = open(str(self.postfile), "w")
-                                    self.data = foo[3:]
-                                    readFile.write(self.data)
-                                    readFile.close()
-                                    print("downloaded "+self.postfile+" from client successfully")
-                                    if self.s.send("pcompleted/.END") == None:
-                                        print "Can't send post complete confirmation. Please try again later"
-                                except Exception, e:
-                                    print "unable to get the file from client. Please try again later"
-                                    print e
-
-                            # if get request command
-                            elif msg[0] == "gr":
-                                print "Received get file request from client"
-                                self.getfile = msg[1]
-                                print "get file: "+ self.getfile
-                                try:
-                                    readFile = open(str(self.getfile),"rb")
-                                    self.data = 'gcompleted'
-                                    self.data += readFile.read()
-                                    self.data += '/.END'
-                                    # TODO: only for debug.
-                                    # self.s.send(self.data)
-                                    if self.s.send(self.data) == None:
-                                        print "Can't send the file to client"
-                                except Exception,e:
-                                    print "Unable to send the file to client. Please try again later"
-                                    print e
-                                    self.data = 'gfailed/.END'
-                                    self.s.send(self.data)
-
-                            #not post/get command
+                        msg = foo.split(" ")
+                        print("asdfasdf"+foo + "command")
+                        #if post request command
+                        if msg[0] == "pr" and self.postrequest == False:
+                            self.finished = False
+                            self.postrequest = True
+                            self.postfile = msg[1]
+                            print "Recieved post request from client"
+                            print "The post file is "+self.postfile
+                            foo = "p /.END"
+                            # TODO: only for debug. delete it when send returns boolean
+                            # self.s.send(foo)
+                            if self.s.send(foo) != None:
+                                print "Send post request confirmation successfully."
                             else:
-                                print "Unknown command from the client"
+                                print "Can't send post request confirmation back to client. Please try again later"
+
+                        # if post actual file command
+                        elif msg[0] == "pm" and self.postrequest == True:
+                            print "Received post file from client"
+                            self.postrequest = False
+                            try:
+                                readFile = open(str(self.postfile), "w")
+                                self.data = foo[3:]
+                                readFile.write(self.data)
+                                readFile.close()
+                                print("downloaded "+self.postfile+" from client successfully")
+                                if self.s.send("pcompleted/.END") == None:
+                                    print "Can't send post complete confirmation. Please try again later"
+                            except Exception, e:
+                                print "unable to get the file from client. Please try again later"
+                                print e
+                            self.finished = True
+
+                        # if get request command
+                        elif msg[0] == "gr":
+                            self.finished = False
+                            print "Received get file request from client"
+                            self.getfile = msg[1]
+                            print "get file: "+ self.getfile
+                            try:
+                                readFile = open(str(self.getfile),"rb")
+                                self.data = 'gcompleted'
+                                self.data += readFile.read()
+                                self.data += '/.END'
+                                # TODO: only for debug.
+                                # self.s.send(self.data)
+                                if self.s.send(self.data) == None:
+                                    print "Can't send the file to client"
+                            except Exception,e:
+                                print "Unable to send the file to client. Please try again later"
+                                print e
+                                self.data = 'gfailed/.END'
+                                self.s.send(self.data)
+                            self.finished = True
+
+                        #not post/get command
+                        else:
+                            print "Unknown command from the client"
 
 
 

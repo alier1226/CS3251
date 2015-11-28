@@ -3,6 +3,7 @@ __author__ = 'alier'
 from RxpSocket import RxpSocket
 from RxpServerSocket import RxpServerSocket
 import sys
+import threading
 import time
 import os
 
@@ -19,6 +20,11 @@ class fxa_client:
 		self.msg = ''
 		self.data =''
 		self.MAXTIMEOUT = 3
+		self.finished = True
+		# self.thread = threading.Thread(target=self.close, args=())
+		# self.thread.daemon = True
+		# self.thread.start()
+
 
 	def _receive(self, s):
 
@@ -52,10 +58,10 @@ class fxa_client:
 					print "time out. please try again later"
 					return None
 
+
 	def main(self):
 
 		while(1):
-
 			#set up for connect
 			if(self.STATE == 'welcome'):
 				if(len(sys.argv)<4):
@@ -90,11 +96,11 @@ class fxa_client:
 
 			#establish connect
 			if(self.STATE == 'connect'):
+				self.finished = True
 				self.msg = ''
 				self.data = ''
 				command = raw_input("It is connected to the server. Please enter a command: ")
 				if command == 'disconnect':
-					self.s.close()
 					self.STATE = 'disconnect'
 				else:
 					self.msg = command.split(' ')
@@ -116,6 +122,7 @@ class fxa_client:
 
 			#if user wants to post
 			if(self.STATE == 'post'):
+				self.finished = False
 				print("post file: " + str(self.msg[1]) + " request")
 				if(not os.path.isfile(str(self.msg[1]))):
 					print "This file does not exist"
@@ -164,6 +171,7 @@ class fxa_client:
 
 			#users want to get a file
 			if(self.STATE == 'get'):
+				self.finished = False
 				print('get file' + str(self.msg[1]))
 				self.data = 'gr ' + str(self.msg[1])+ '/.END'
 				# self.s.send(self.data)
@@ -201,7 +209,6 @@ class fxa_client:
 			if(self.STATE == 'disconnect'):
 				print('disconnect')
 				self.s.close()
-
 
 
 my_client = fxa_client()
