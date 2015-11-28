@@ -235,10 +235,10 @@ class RxpSocket(object):
 		# remove endfile pointer
 		realData = "".join(realData)
 		realData = realData[:-11]
-
-		foo = open("foo.txt", "w+")
-		foo.write(realData)
-		foo.close()
+        #
+		# foo = open("foo.txt", "w+")
+		# foo.write(realData)
+		# foo.close()
 
 		return realData
 
