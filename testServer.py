@@ -38,6 +38,9 @@ def main():
 		print "Client is sending data"
 		s.recv(3000)
 
+	print "CLOSING"
+	s.close()
+
 	# foo = s.recv(3000)
 	# s.send("data1")
 	# s.send("data2")

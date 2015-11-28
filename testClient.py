@@ -33,18 +33,20 @@ def main():
 	s.send("NEED DATA")
 	s.recv(3000)
 
-
-	s.send("NEED DATA")
-	s.recv(3000)
-	s.recv(3000)
-	s.send("asdf")
-
-	s.send("HELLo")
-	res = s.recv(3000)
-	print res
-	s.send("WORLD")
-	res = s.recv(3000)
-	print res
+	print "CLOSING"
+	while  not s.close():
+		pass
+	# s.send("NEED DATA")
+	# s.recv(3000)
+	# s.recv(3000)
+	# s.send("asdf")
+	#
+	# s.send("HELLo")
+	# res = s.recv(3000)
+	# print res
+	# s.send("WORLD")
+	# res = s.recv(3000)
+	# print res
 
 if __name__ == "__main__":
 	main()

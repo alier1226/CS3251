@@ -50,6 +50,65 @@ class RxpSocket(object):
 
 	# close connection
 	def close(self):
+		if self.states["Connected"]:
+
+			self.socket.settimeout(None)
+
+			if self.d: print "Server listening for FIN"
+			data, clientAddr = self._recvAndAckNum(PACKETSIZE)
+			rcvheader, rcvData = self._decodeHeader(data)
+
+			# check for corruption
+			if not self._checkChecksum(rcvheader["checksum"],data):
+				if self.d: print "packet corrupted"
+				return None
+
+
+			if rcvheader["flags"] == 0b001:
+				if self.d: print "Flag is FIN"
+
+				self.socket.settimeout(1)
+				header = self._createPacket("FIN", None)
+				if self.d: print "Received FIN, sending FIN"
+
+				# keep sending FIN until a valid response is heard
+				goodRes = False
+				loop = 10
+				while not goodRes and loop > 0:
+					loop += -1
+					try:
+						if self.d: print "Repeat sending FIN to", clientAddr
+						self.socket.sendto(header, (self.hostAddress, self.emuPort))
+						data, clientAddr = self._recvAndAckNum(PACKETSIZE)
+						rcvHeader, rcvData = self._decodeHeader(data)
+
+						if rcvHeader["flags"] == 0b010:
+							goodRes = True
+
+					#if ack is corrupt or lost, just assume client sent ACK
+					except socket.timeout:
+						if self.d: print "Did not receive ACK"
+						#return False
+						continue
+
+				if loop <= 0:
+					if self.d: print "Did not receive ACK, FIN complete"
+				else:
+					if self.d: print "Received ACK, FIN complete"
+					self.nextSeqNumber = rcvHeader["seqNum"] + 1
+
+
+				self.states["Connected"] = False
+
+				return self
+
+
+			else:
+				if self.d: print "Flag is NOT FIN"
+				return None
+
+
+
 		return
 
 	# receive from server
@@ -86,10 +145,8 @@ class RxpSocket(object):
 					if self.d: print "received data", rcvHeader["seqNum"], "next seq", self.nextSeqNumber
 					self.seqNumArr.append(rcvHeader["seqNum"])
 
-
-
 					#check for corruption
-					if not self._checkChecksum(rcvHeader["checksum"],data[:-len(rcvData)]):
+					if not self._checkChecksum(rcvHeader["checksum"],data):
 						if self.d: print "packet corrupted"
 						windowError =True
 
@@ -250,6 +307,11 @@ class RxpSocket(object):
 						if self.d: print "Flag is an ACK"
 						packetsAcked = True
 
+					#print "CHECKING NUMBERS----------", self.ackNumber, self.seqNumber, self.nextSeqNumber, rcvHeader["seqNum"]
+
+					if not rcvHeader["seqNum"] == self.ackNumber - 1:
+						if self.d: print "Wrong ACK seq number"
+						continue
 
 					if rcvHeader["rcvWindow"] == 0:
 						if self.d: print "Can't send any more data to host"
@@ -283,8 +345,6 @@ class RxpSocket(object):
 
 		if not self.states["Connected"]:
 
-
-
 			# creating header for SYN packet
 			header = self._createPacket("SYN", None)
 
@@ -309,43 +369,26 @@ class RxpSocket(object):
 						if self.d: print "packet corrupted"
 						continue
 
-					self.nextSeqNumber = rcvHeader["seqNum"] + 1
 
 
 					# check for SYNACK flag
 					if rcvHeader["flags"] == 0b110:
 						if self.d: print "Flag is SYNACK"
 						goodRes = True
+					else:
+						if self.d: print "Flag is NOT SYNACK"
+						continue
+
+
+					self.nextSeqNumber = rcvHeader["seqNum"] + 1
+
+
+
 
 				except socket.timeout:
 					continue
 				header = self._createPacket("ACK", None)
 				self.socket.sendto(header, (self.hostAddress, self.emuPort))
-			# set server rcvWindow
-			# ackDone = False
-			# while not ackDone:
-			#
-			# 	header = self._createPacket("ACK", None)
-			# 	self.socket.sendto(header, (self.hostAddress, self.emuPort))
-			#
-			# 	if self.d: print "Sending ACK to", self.hostAddress, self.emuPort
-			#
-			# 	# check if server is still sending info => no ack received
-			# 	try:
-			# 		self.socket.settimeout(1)
-			# 		data, addrs = self._recvAndAckNum(PACKETSIZE)
-			# 		rcvHeader, rcvData = self._decodeHeader(data)
-			#
-			# 		if rcvHeader["flags"] == 0b110:
-			# 			if self.d: print "ACK not received, trying again"
-			#
-			# 	except socket.timeout:
-			# 		if self.d: print "ACK was received"
-			# 		ackDone = True
-
-
-
-
 
 			self.states["Connected"] = True
 			return True
@@ -469,7 +512,11 @@ class RxpSocket(object):
 	def _checkChecksum(self, oldChecksum, newData):
 
 		# check if packet is corrupted
-		newChecksum = self._calculateChecksum(newData[0:len(newData) - 16])
+		cutOff = 0
+		if len(newData) > HEADERSIZE:
+			cutOff = len(newData) - HEADERSIZE
+
+		newChecksum = self._calculateChecksum(newData[0:len(newData) - 16 - cutOff])
 		newChecksum = int(newChecksum,2)
 		if oldChecksum == newChecksum:
 			return True

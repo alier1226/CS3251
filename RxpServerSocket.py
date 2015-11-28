@@ -83,6 +83,58 @@ class RxpServerSocket(RxpSocket):
 		self.socket.settimeout(None)
 		self.states["Accepting"] = True
 
+	def close(self):
+
+		if self.states["Connected"]:
+
+			header = self._createPacket("FIN", None)
+
+			# set timeout so that it will keep trying to send FIN
+			self.socket.settimeout(1)
+
+			# keep sending FIN until responds
+			goodRes = False
+			while not goodRes:
+				try:
+					if self.d: print "Repeat sending FIN to", self.hostAddress, self.emuPort
+					self.socket.sendto(header, (self.hostAddress, self.emuPort))
+
+
+					data, addrs = self._recvAndAckNum(PACKETSIZE)
+					rcvHeader, rcvData = self._decodeHeader(data)
+					if self.d: print "Recevied data from server"
+
+					# check for corruption
+					if not self._checkChecksum(rcvHeader["checksum"],data):
+						if self.d: print "packet corrupted"
+						continue
+					# check for fin flag
+
+					if rcvHeader["flags"] == 0b001:
+						if self.d: print "Flag is FIN"
+						goodRes = True
+					else:
+						if self.d: print "Flag is NOT FIN"
+						continue
+
+
+					self.nextSeqNumber = rcvHeader["seqNum"] + 1
+
+				except socket.timeout:
+					continue
+			header = self._createPacket("ACK", None)
+			self.socket.sendto(header, (self.hostAddress, self.emuPort))
+
+			if self.d: print "Sending ACK, FIN complete"
+
+			self.states["Connected"] = False
+
+			return True
+		else:
+			return False
+
+
+
 		# self.socket.settimeout(None)
 		# if self.d: print "Waiting on client command"
 		# data, clientAddrs = self._recvAndAckNum(PACKETSIZE)
