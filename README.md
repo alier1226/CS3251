@@ -45,6 +45,8 @@ Go to the folder and
 
 1. Cannot handle multiple clients
 
-2. 
+2. Disconnect a client after doing at least 1 post/get command
+
+3. The server can terminate at any time, but the console won't be shut down until the client sends something to the server.
 
 * You can read our documentation on https://docs.google.com/document/d/1yfl6SzNZw_GZuktf727YjCzSV7xYUU4iiTpC4nhiLWM/edit?usp=sharing

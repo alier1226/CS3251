@@ -77,7 +77,7 @@ class RxpServerSocket(RxpSocket):
 
 					except socket.timeout:
 						if self.d: print "Did not receive ACK"
-						#return False
+						# return False
 						continue
 
 				# if loop <= 0:
