@@ -94,110 +94,122 @@ class fxaserver:
                         print("Unable to shut down client. please try again later")
                 print("Shutting down server now")
                 self.s.close()
-
+                break
 
 
 
     def main(self):
         while(1):
-            if(len(sys.argv)<4):
-                print "invalid command"
-                break
-            try:
-                self.FXAPORT = int(sys.argv[1])
-            except:
-                print "invalid command"
-
-            if self.FXAPORT%2 != 1:
-                print "Please enter a valid port number that the socket should bind to (must be even)"
-                print "set to default 8081"
-            self.EMUIP = sys.argv[2]
-            self.EMUPORT = int(sys.argv[3])
-            if len(sys.argv) > 4:
-                if ((sys.argv[4] == 'd') or (sys.argv[4] == 'D')):
-                    self.DEBUG = True
-                else:
-                    print "Invalid debug command"
-            self.s = RxpServerSocket(self.DEBUG)
-            self.s.bind(self.EMUIP, self.EMUPORT, self.FXAPORT)
-            self.s.listen()
-
-            while not self.s.states["Connected"]:
-                try:
-                    self.s.accept()
-                    print("A client has connected")
-                    self.connected = True
-                except Exception,e:
-                    print("waiting for client")
-
-                #client
+            if self.terminate == True and self.finished == True:
+                return
+            else:
                 while(1):
-                    foo = self._receive(self.s)
-                    print "received command from client: "+foo
-                    if foo == None or len(foo) == 0:
-                        print "command from client is none"
-                    else:
-                        msg = foo.split(" ")
-                        print("asdfasdf"+foo + "command")
-                        #if post request command
-                        if msg[0] == "pr" and self.postrequest == False:
-                            self.finished = False
-                            self.postrequest = True
-                            self.postfile = msg[1]
-                            print "Recieved post request from client"
-                            print "The post file is "+self.postfile
-                            foo = "p /.END"
-                            # TODO: only for debug. delete it when send returns boolean
-                            # self.s.send(foo)
-                            if self.s.send(foo) != None:
-                                print "Send post request confirmation successfully."
-                            else:
-                                print "Can't send post request confirmation back to client. Please try again later"
+                    if(len(sys.argv)<4):
+                        print "invalid command"
+                        break
+                    try:
+                        self.FXAPORT = int(sys.argv[1])
+                    except:
+                        print "invalid command"
 
-                        # if post actual file command
-                        elif msg[0] == "pm" and self.postrequest == True:
-                            print "Received post file from client"
-                            self.postrequest = False
-                            try:
-                                readFile = open("serv" + str(self.postfile), "w")
-                                self.data = foo[3:]
-                                readFile.write(self.data)
-                                readFile.close()
-                                print("downloaded "+self.postfile+" from client successfully")
-                                if self.s.send("pcompleted/.END") == None:
-                                    print "Can't send post complete confirmation. Please try again later"
-                            except Exception, e:
-                                print "unable to get the file from client. Please try again later"
-                                print e
-                            self.finished = True
-
-                        # if get request command
-                        elif msg[0] == "gr":
-                            self.finished = False
-                            print "Received get file request from client"
-                            self.getfile = msg[1]
-                            print "get file: "+ self.getfile
-                            try:
-                                readFile = open(str(self.getfile),"rb")
-                                self.data = 'gcompleted'
-                                self.data += readFile.read()
-                                self.data += '/.END'
-                                # TODO: only for debug.
-                                # self.s.send(self.data)
-                                if self.s.send(self.data) == None:
-                                    print "Can't send the file to client"
-                            except Exception,e:
-                                print "Unable to send the file to client. Please try again later"
-                                print e
-                                self.data = 'gfailed/.END'
-                                self.s.send(self.data)
-                            self.finished = True
-
-                        #not post/get command
+                    if self.FXAPORT%2 != 1:
+                        print "Please enter a valid port number that the socket should bind to (must be even)"
+                        print "set to default 8081"
+                    self.EMUIP = sys.argv[2]
+                    self.EMUPORT = int(sys.argv[3])
+                    if len(sys.argv) > 4:
+                        if ((sys.argv[4] == 'd') or (sys.argv[4] == 'D')):
+                            self.DEBUG = True
                         else:
-                            print "Unknown command from the client"
+                            print "Invalid debug command"
+                    self.s = RxpServerSocket(self.DEBUG)
+                    self.s.bind(self.EMUIP, self.EMUPORT, self.FXAPORT)
+                    self.s.listen()
 
+                    if(self.terminate == True and self.finished == True):
+                        return
 
+                    while not self.s.states["Connected"]:
+                        try:
+                            if(self.terminate == True and self.finished == True):
+                                return
+                            self.s.accept()
+                            print("A client has connected")
+                            self.connected = True
+                        except Exception,e:
+                            print("waiting for client")
+
+                        #client
+                        while(1):
+                            if(self.terminate == True and self.finished == True):
+                                return
+                            foo = self._receive(self.s)
+                            print "received command from client: "+foo
+                            if foo == None or len(foo) == 0:
+                                print "command from client is none"
+                            elif foo == "disconnect":
+                                print "A client wants to disconnect"
+                                break;
+
+                            else:
+                                msg = foo.split(" ")
+                                #if post request command
+                                if msg[0] == "pr" and self.postrequest == False:
+                                    self.finished = False
+                                    self.postrequest = True
+                                    self.postfile = msg[1]
+                                    print "Recieved post request from client"
+                                    print "The post file is "+self.postfile
+                                    foo = "p /.END"
+                                    # TODO: only for debug. delete it when send returns boolean
+                                    # self.s.send(foo)
+                                    if self.s.send(foo) != None:
+                                        print "Send post request confirmation successfully."
+                                    else:
+                                        print "Can't send post request confirmation back to client. Please try again later"
+
+                                # if post actual file command
+                                elif msg[0] == "pm" and self.postrequest == True:
+                                    print "Received post file from client"
+                                    self.postrequest = False
+                                    try:
+                                        readFile = open("serv" + str(self.postfile), "w")
+                                        self.data = foo[3:]
+                                        readFile.write(self.data)
+                                        readFile.close()
+                                        print("downloaded "+self.postfile+" from client successfully")
+                                        if self.s.send("pcompleted/.END") == None:
+                                            print "Can't send post complete confirmation. Please try again later"
+                                    except Exception, e:
+                                        print "unable to get the file from client. Please try again later"
+                                        print e
+                                    self.finished = True
+
+                                # if get request command
+                                elif msg[0] == "gr":
+                                    self.finished = False
+                                    print "Received get file request from client"
+                                    self.getfile = msg[1]
+                                    print "get file: "+ self.getfile
+                                    try:
+                                        readFile = open(str(self.getfile),"rb")
+                                        self.data = 'gcompleted'
+                                        self.data += readFile.read()
+                                        self.data += '/.END'
+                                        # TODO: only for debug.
+                                        # self.s.send(self.data)
+                                        if self.s.send(self.data) == None:
+                                            print "Can't send the file to client"
+                                    except Exception,e:
+                                        print "Unable to send the file to client. Please try again later"
+                                        print e
+                                        self.data = 'gfailed/.END'
+                                        self.s.send(self.data)
+                                    self.finished = True
+
+                                #not post/get command
+                                else:
+                                    print "Unknown command from the client"
 
 
 server = fxaserver()

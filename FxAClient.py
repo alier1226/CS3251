@@ -207,7 +207,8 @@ class fxa_client:
 
 			#user wants to disconnect
 			if(self.STATE == 'disconnect'):
-				print('disconnect')
+				print('User wants to disconnect')
+				self.s.send("disconnect/.END")
 				self.s.close()
 				self.STATE = "welcome"
 
