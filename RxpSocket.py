@@ -263,7 +263,7 @@ class RxpSocket(object):
 					if self.d: print "Received all of window, acknowledging"
 					if self.d: print "self seqNumARr", self.seqNumArr, "ack", self.ackNumber
 
-					print "SETTING NEXTSEQ--------", self.ackNumber
+					#print "SETTING NEXTSEQ--------", self.ackNumber
 					self.nextSeqNumber = self.ackNumber
 
 					if self.d: print "setting host rcv to", rcvHeader["rcvWindow"]
