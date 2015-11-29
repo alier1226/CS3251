@@ -182,7 +182,7 @@ class RxpSocket(object):
 					rcvHeader, rcvData = self._decodeHeader(data)
 
 
-					print "CALC DUP FOR",self.nextSeqNumber,rcvHeader["seqNum"]
+					#print "CALC DUP FOR",self.nextSeqNumber,rcvHeader["seqNum"]
 
 					if self.nextSeqNumber > rcvHeader["seqNum"]:
 						th = 0
@@ -467,7 +467,7 @@ class RxpSocket(object):
 				except socket.timeout:
 					continue
 				header = self._createPacket("ACK", None)
-				#self.socket.sendto(header, (self.hostAddress, self.emuPort))
+				self.socket.sendto(header, (self.hostAddress, self.emuPort))
 
 			self.states["Connected"] = True
 			return True
