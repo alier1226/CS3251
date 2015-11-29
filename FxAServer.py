@@ -159,7 +159,7 @@ class fxaserver:
                             print "Received post file from client"
                             self.postrequest = False
                             try:
-                                readFile = open(str(self.postfile), "w")
+                                readFile = open("serv" + str(self.postfile), "w")
                                 self.data = foo[3:]
                                 readFile.write(self.data)
                                 readFile.close()

@@ -28,18 +28,24 @@ def main():
 
 
 	foo = s.recv(3000)
-	if foo == "NEED DATA":
-		print "Client needs data"
-		print "reading file"
-		readFile = open("Alice.txt", "rb")
-		nextData = readFile.read()
-		s.send(nextData)
-	if foo == "SEND DATA":
-		print "Client is sending data"
-		s.recv(3000)
+	print "--------------------------", foo, "------------------------"
+	foo = s.recv(3000)
+	print "--------------------------", foo, "------------------------"
+	foo = s.recv(3000)
+	print "--------------------------", foo, "------------------------"
 
-	print "CLOSING"
-	s.close()
+	# if foo == "NEED DATA":
+	# 	print "Client needs data"
+	# 	print "reading file"
+	# 	readFile = open("Alice.txt", "rb")
+	# 	nextData = readFile.read()
+	# 	s.send(nextData)
+	# if foo == "SEND DATA":
+	# 	print "Client is sending data"
+	# 	s.recv(3000)
+
+	# print "CLOSING"
+	# s.close()
 
 	# foo = s.recv(3000)
 	# s.send("data1")

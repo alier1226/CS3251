@@ -191,7 +191,7 @@ class fxa_client:
 						print "unable to download the file. please try again later"
 					else:
 						try:
-							readFile = open(str(self.msg[1]), "w")
+							readFile = open("cli" + str(self.msg[1]), "w")
 							self.data = recvMsg[10:]
 							readFile.write(self.data)
 							readFile.close()
@@ -209,6 +209,8 @@ class fxa_client:
 			if(self.STATE == 'disconnect'):
 				print('disconnect')
 				self.s.close()
+				self.STATE = "welcome"
+
 
 
 my_client = fxa_client()

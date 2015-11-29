@@ -30,12 +30,16 @@ def main():
 	# nextData = readFile.read()
 	# s.send(nextData)
 
-	s.send("NEED DATA")
-	s.recv(3000)
+	# s.send("NEED DATA")
+	# s.recv(3000)
 
-	print "CLOSING"
-	while  not s.close():
-		pass
+	s.send("Hello")
+	s.send("World")
+	s.send("I AM")
+
+	# print "CLOSING"
+	# while  not s.terminate():
+	# 	pass
 	# s.send("NEED DATA")
 	# s.recv(3000)
 	# s.recv(3000)

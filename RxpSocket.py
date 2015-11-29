@@ -34,6 +34,7 @@ class RxpSocket(object):
 		self.seqNumArr = []
 
 		self.prevData = 0
+		self.prevAck = 0
 
 		self.portNumber = 0
 		self.hostAddress = 0
@@ -47,9 +48,44 @@ class RxpSocket(object):
 
 		}
 
+	def _reset(self):
+		self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.timeout = 0
+		self.rcvWindow = 9000
+		self.windowSize = 3
+		self.ackNumber = 0
+
+		self.seqNumber = randint(0, pow(2,32) - 1)
+		self.seqNumber = 10
+		self.hostRcvWindow = 0
+
+		self.nextSeqNumber = self.seqNumber
+
+		self.seqNumArr = []
+
+		self.prevData = 0
+
+		self.portNumber = 0
+		self.hostAddress = 0
+		self.emuPort = 0
+
+
+
+		self.states = {
+			"Connected": False,
+			"Accepting": False
+
+		}
+
+	def close(self):
+		if self.d: print "client closing"
+		self.socket.close()
+		self.states["Connected"] = False
+		self._reset()
+		return True
 
 	# close connection
-	def close(self):
+	def terminate(self):
 		if self.states["Connected"]:
 
 			self.socket.settimeout(None)
@@ -113,11 +149,11 @@ class RxpSocket(object):
 
 	# receive from server
 	def recv(self, bufsize):
-		if self.d: print "Ready to receive file"
+		#if self.d: print "Ready to receive file"
 		self.rcvWindow = bufsize
 
 		realData = []
-
+		firstTime = True
 		rcvData = ""
 		finishedAll = False
 
@@ -138,17 +174,62 @@ class RxpSocket(object):
 						self.socket.settimeout(None)
 						waitTillFirst = False
 					else: self.socket.settimeout(1)
+
 					data, addrs = self._recvAndAckNum(PACKETSIZE)
 					rcvHeader, rcvData = self._decodeHeader(data)
-					self.prevData = data
 
-					if self.d: print "received data", rcvHeader["seqNum"], "next seq", self.nextSeqNumber
-					self.seqNumArr.append(rcvHeader["seqNum"])
+					tempH = {"seqNum": 0}
+					if self.prevData != 0:
+						tempH, tempD = self._decodeHeader(self.prevData)
+
+
+					if tempH["seqNum"] == rcvHeader["seqNum"] and firstTime:
+						if self.d: print "DUP", "\n", rcvHeader, "\n", tempH
+						if self.d: print "DUPLICATE DATA, NO ACK RECEIVED"
+
+						goodRes = False
+						self.socket.settimeout(.2)
+						retryTimout = 15
+						while not goodRes:
+							try:
+								if retryTimout < 0:
+									if self.d: print "no response from host means ACK was received"
+									goodRes = True
+
+								if self.d: print "retry sending last ACK", self.prevAck
+								self.socket.sendto(self.prevAck, (self.hostAddress, self.emuPort))
+
+								data, addrs = self._recvAndAckNum(PACKETSIZE)
+								rcvHeader, rcvData = self._decodeHeader(data)
+
+								#check for corruption
+								if not self._checkChecksum(rcvHeader["checksum"],data):
+									if self.d: print "packet corrupted"
+									continue
+
+								if not tempH["seqNum"] == rcvHeader["seqNum"]:
+									if self.d: print "Different data received"
+									goodRes = True
+
+							except socket.timeout:
+								retryTimout -= 1
+								continue
+					else:
+						if self.d: print "NEW DATA"
+
+
+					self.prevData = data
+					firstTime = False
+
+
 
 					#check for corruption
 					if not self._checkChecksum(rcvHeader["checksum"],data):
 						if self.d: print "packet corrupted"
 						windowError =True
+
+					if self.d: print "received data", rcvHeader["seqNum"], "next seq", self.nextSeqNumber
+					self.seqNumArr.append(rcvHeader["seqNum"])
 
 					# check if first packet has the correct seq number
 					if firstLoop:
@@ -197,6 +278,7 @@ class RxpSocket(object):
 					if self.d: print "Received all of window, acknowledging"
 					if self.d: print "self seqNumARr", self.seqNumArr, "ack", self.ackNumber
 
+					print "SETTING NEXTSEQ--------", self.ackNumber
 					self.nextSeqNumber = self.ackNumber
 
 					if self.d: print "setting host rcv to", rcvHeader["rcvWindow"]
@@ -211,6 +293,7 @@ class RxpSocket(object):
 					else:
 						header = self._createPacket("ACK", None)
 						self.socket.sendto(header, (self.hostAddress, self.emuPort))
+						self.prevAck = header
 					break
 				elif windowError:
 					if self.d: print "Error in sending window"
@@ -235,7 +318,7 @@ class RxpSocket(object):
 		# remove endfile pointer
 		realData = "".join(realData)
 		realData = realData[:-11]
-        #
+
 		# foo = open("foo.txt", "w+")
 		# foo.write(realData)
 		# foo.close()
@@ -280,7 +363,12 @@ class RxpSocket(object):
 			nextGroup = fullPacketArr
 
 			packetsAcked = False
+			ackTimeout = 15
 			while not packetsAcked:
+
+				if ackTimeout < 0:
+					if self.d: print "No response from host means host is not receiving"
+					return True
 
 				# if no ACK, resend
 				for packet in nextGroup:
@@ -320,7 +408,8 @@ class RxpSocket(object):
 					self.hostRcvWindow = rcvHeader["rcvWindow"]
 
 				except socket.timeout:
-					if self.d: print "No ACK recevied"
+					ackTimeout -= 1
+					if self.d: print "No ACK recevied", ackTimeout
 					continue
 
 		return True
@@ -379,7 +468,7 @@ class RxpSocket(object):
 						if self.d: print "Flag is NOT SYNACK"
 						continue
 
-
+					print "SETTING NEXT SEQ ----------- CONNECT", rcvHeader["seqNum"] + 1
 					self.nextSeqNumber = rcvHeader["seqNum"] + 1
 
 
@@ -388,7 +477,7 @@ class RxpSocket(object):
 				except socket.timeout:
 					continue
 				header = self._createPacket("ACK", None)
-				self.socket.sendto(header, (self.hostAddress, self.emuPort))
+				#self.socket.sendto(header, (self.hostAddress, self.emuPort))
 
 			self.states["Connected"] = True
 			return True

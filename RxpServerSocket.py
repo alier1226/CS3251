@@ -21,11 +21,11 @@ class RxpServerSocket(RxpSocket):
 		self.expectedSeq = 0
 
 
-
 	#listen for potential connections
 	def accept(self):
 		if self.states["Accepting"]:
-			# generate random sequence number
+
+			self.socket.settimeout(None)
 			if self.d: print "Server listening for SYN"
 			data, clientAddr = self._recvAndAckNum(PACKETSIZE)
 			rcvheader, rcvData = self._decodeHeader(data)
@@ -39,34 +39,62 @@ class RxpServerSocket(RxpSocket):
 			if rcvheader["flags"] == 0b100:
 
 
-				self.socket.settimeout(1)
+				self.socket.settimeout(.3)
 				header = self._createPacket("SYNACK", None)
 				if self.d: print "Received SYN, sending SYNACK"
 
+				noAck = False
 				# keep sending SYNACK until a valid response is heard
 				goodRes = False
-				loop = 10
-				while not goodRes and loop > 0:
-					loop += -1
+				#loop = 10
+				#while not goodRes and loop > 0:
+				while not goodRes:
+					#loop += -1
 					try:
 						if self.d: print "Repeat sending SYNACK to", clientAddr
 						self.socket.sendto(header, (self.hostAddress, self.emuPort))
 						data, clientAddr = self._recvAndAckNum(PACKETSIZE)
 						rcvHeader, rcvData = self._decodeHeader(data)
 
+
+
+
+
+						# check for corruption
+						if not self._checkChecksum(rcvHeader["checksum"],data):
+							if self.d: print "ACK packet corrupted"
+							#return None
+							continue
+
 						if rcvHeader["flags"] == 0b010:
 							goodRes = True
 
-					#if ack is corrupt or lost, just assume client sent ACK
+						if rcvHeader["flags"] == 0:
+							if self.d: print "No ACK, but got data, continuing"
+							goodRes = True
+							noAck = True
+							self.nextSeqNumber = rcvHeader["seqNum"]
+
 					except socket.timeout:
 						if self.d: print "Did not receive ACK"
 						#return False
 						continue
 
-				if loop <= 0:
-					if self.d: print "Did not receive ACK, handshake complete"
+				# if loop <= 0:
+				# 	if self.d: print "Did not receive ACK, handshake complete"
+				# else:
+				# 	if self.d: print "Received ACK, handshake complete"
+				# 	print "SETTING NEXT SEQ -----------ACCEPT", rcvHeader["seqNum"] + 1
+				# 	self.nextSeqNumber = rcvHeader["seqNum"] + 1
+
+				if self.d: print "Received ACK, handshake complete"
+				#print "SETTING NEXT SEQ -----------ACCEPT", rcvHeader["seqNum"] + 1
+
+				if noAck:
+					print "SETTING NEXT SEQ -----------ACCEPT", rcvHeader["seqNum"]
+					self.nextSeqNumber = rcvHeader["seqNum"]
 				else:
-					if self.d: print "Received ACK, handshake complete"
+					print "SETTING NEXT SEQ -----------ACCEPT", rcvHeader["seqNum"] + 1
 					self.nextSeqNumber = rcvHeader["seqNum"] + 1
 
 
@@ -84,6 +112,7 @@ class RxpServerSocket(RxpSocket):
 		self.states["Accepting"] = True
 
 	def close(self):
+
 
 		if self.states["Connected"]:
 
@@ -131,6 +160,7 @@ class RxpServerSocket(RxpSocket):
 
 			return True
 		else:
+			print "Server not connected"
 			return False
 
 
