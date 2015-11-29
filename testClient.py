@@ -24,18 +24,21 @@ def main():
 	s.bind(emuIp, emuPort, fxaPort)
 	s.connect()
 
-	# s.send("SEND DATA")
-	# print "reading file"
-	# readFile = open("Alice.txt", "rb")
-	# nextData = readFile.read()
-	# s.send(nextData)
+
+	# s.send("Hello")
+
+
+	s.send("SEND DATA")
+	print "reading file"
+	readFile = open("Alice.txt", "rb")
+	nextData = readFile.read()
+	s.send(nextData)
 
 	# s.send("NEED DATA")
 	# s.recv(3000)
 
-	s.send("Hello")
-	s.send("World")
-	s.send("I AM")
+	# s.send("World")
+
 
 	# print "CLOSING"
 	# while  not s.terminate():

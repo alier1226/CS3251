@@ -173,49 +173,34 @@ class RxpSocket(object):
 					if waitTillFirst:
 						self.socket.settimeout(None)
 						waitTillFirst = False
-					else: self.socket.settimeout(1)
+					# else:
+
+					self.socket.settimeout(1)
+
 
 					data, addrs = self._recvAndAckNum(PACKETSIZE)
 					rcvHeader, rcvData = self._decodeHeader(data)
 
-					tempH = {"seqNum": 0}
-					if self.prevData != 0:
-						tempH, tempD = self._decodeHeader(self.prevData)
 
+					print "CALC DUP FOR",self.nextSeqNumber,rcvHeader["seqNum"]
 
-					if tempH["seqNum"] == rcvHeader["seqNum"] and firstTime:
-						if self.d: print "DUP", "\n", rcvHeader, "\n", tempH
-						if self.d: print "DUPLICATE DATA, NO ACK RECEIVED"
+					if self.nextSeqNumber > rcvHeader["seqNum"]:
+						th = 0
+						if self.prevAck != 0:
+							th, td = self._decodeHeader(self.prevAck)
+						else:
+							header = self._createPacket("ACK", None)
+							self.prevAck = header
+						if self.d: print "retry sending last ACK", th
+						self.socket.sendto(self.prevAck, (self.hostAddress, self.emuPort))
+						continue
+					#
+					# 	# check for end of window
+					# 	if (len(rcvData) > 5 and rcvData[-5:] == ":END:") :
+					# 		if self.d: print "End of window detected"
+					# 		windowEnd = True
+					# 	continue
 
-						goodRes = False
-						self.socket.settimeout(.2)
-						retryTimout = 15
-						while not goodRes:
-							try:
-								if retryTimout < 0:
-									if self.d: print "no response from host means ACK was received"
-									goodRes = True
-
-								if self.d: print "retry sending last ACK", self.prevAck
-								self.socket.sendto(self.prevAck, (self.hostAddress, self.emuPort))
-
-								data, addrs = self._recvAndAckNum(PACKETSIZE)
-								rcvHeader, rcvData = self._decodeHeader(data)
-
-								#check for corruption
-								if not self._checkChecksum(rcvHeader["checksum"],data):
-									if self.d: print "packet corrupted"
-									continue
-
-								if not tempH["seqNum"] == rcvHeader["seqNum"]:
-									if self.d: print "Different data received"
-									goodRes = True
-
-							except socket.timeout:
-								retryTimout -= 1
-								continue
-					else:
-						if self.d: print "NEW DATA"
 
 
 					self.prevData = data
@@ -309,6 +294,7 @@ class RxpSocket(object):
 					continue
 				firstLoop = False
 
+			print "END OF WINDOW------------------------------------------"
 			realData.extend(windowData)
 
 			if (len(rcvData) > 16 and rcvData[-16:] == "::ENDFILE:::END:") and not windowError:
@@ -368,7 +354,7 @@ class RxpSocket(object):
 
 				if ackTimeout < 0:
 					if self.d: print "No response from host means host is not receiving"
-					return True
+					#return True
 
 				# if no ACK, resend
 				for packet in nextGroup:
@@ -387,6 +373,14 @@ class RxpSocket(object):
 						if self.d: print "packet corrupted"
 						continue
 
+
+
+					#print "CHECKING NUMBERS----------", self.ackNumber, self.seqNumber, self.nextSeqNumber, rcvHeader["seqNum"]
+
+					if not rcvHeader["seqNum"] == self.ackNumber - 1:
+						if self.d: print "Wrong ACK seq number"
+						continue
+
 					# check for ACK flag
 					if not rcvHeader["flags"] == 0b010:
 						if self.d: print "Flag is NOT an ACK"
@@ -395,11 +389,7 @@ class RxpSocket(object):
 						if self.d: print "Flag is an ACK"
 						packetsAcked = True
 
-					#print "CHECKING NUMBERS----------", self.ackNumber, self.seqNumber, self.nextSeqNumber, rcvHeader["seqNum"]
 
-					if not rcvHeader["seqNum"] == self.ackNumber - 1:
-						if self.d: print "Wrong ACK seq number"
-						continue
 
 					if rcvHeader["rcvWindow"] == 0:
 						if self.d: print "Can't send any more data to host"

@@ -39,7 +39,7 @@ class RxpServerSocket(RxpSocket):
 			if rcvheader["flags"] == 0b100:
 
 
-				self.socket.settimeout(.3)
+				self.socket.settimeout(1)
 				header = self._createPacket("SYNACK", None)
 				if self.d: print "Received SYN, sending SYNACK"
 
@@ -77,8 +77,8 @@ class RxpServerSocket(RxpSocket):
 
 					except socket.timeout:
 						if self.d: print "Did not receive ACK"
-						#return False
-						continue
+						return False
+						#continue
 
 				# if loop <= 0:
 				# 	if self.d: print "Did not receive ACK, handshake complete"
