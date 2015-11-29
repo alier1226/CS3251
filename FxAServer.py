@@ -103,7 +103,6 @@ class fxaserver:
             if self.terminate == True and self.finished == True:
                 return
             else:
-
                 while(1):
                     if(len(sys.argv)<4):
                         print "invalid command"
